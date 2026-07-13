@@ -1,0 +1,5 @@
+.superpowers/
+# 本機產物
+*.bak
+.DS_Store
+Thumbs.db
