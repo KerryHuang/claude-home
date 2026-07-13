@@ -16,7 +16,7 @@ Kerry 的 **user-root 層 Claude Code 設定版控**——把 `~/.claude` 中「
 
 ```
 shared/    跨產品穩定原則（溝通、工程、context 管理）
-claude/    Claude Code 專用（skills、agents、statusline）
+claude/    Claude Code 專用（skills、agents、hooks、statusline）
 codex/     掛載點保留（目前停用）
 rules/     語言／領域規則（dotnet、vue-typescript、python、mssql-safety…）
 config/    settings 共用範本（安裝時合併，不覆蓋既有值）

@@ -25,6 +25,7 @@ remove_dir_items "$REPO_DIR/shared"              "shared"
 remove_dir_items "$REPO_DIR/rules"               "rules"
 remove_dir_items "$REPO_DIR/claude/skills"       "skills"
 remove_dir_items "$REPO_DIR/claude/agents"       "agents"
+remove_dir_items "$REPO_DIR/claude/hooks"        "hooks"
 remove_if_same  "$REPO_DIR/claude/statusline.sh" "statusline.sh"
 find "$TARGET" -type d -empty -delete 2>/dev/null || true
 echo "完成。"

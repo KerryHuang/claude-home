@@ -31,6 +31,7 @@ install_dir  "$REPO_DIR/shared"              "shared"
 install_dir  "$REPO_DIR/rules"               "rules"
 install_dir  "$REPO_DIR/claude/skills"       "skills"
 install_dir  "$REPO_DIR/claude/agents"       "agents"
+install_dir  "$REPO_DIR/claude/hooks"        "hooks"
 install_file "$REPO_DIR/claude/statusline.sh" "statusline.sh"
 
 # settings.json 深度合併（既有值優先，範本只補缺；清單去重聯集）
