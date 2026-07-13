@@ -21,6 +21,11 @@
 - `rules/mssql-safety.md` — 對 SQL Server 下任何查詢／維運指令前
 - `rules/markdown-docs.md` — 撰寫 Markdown／MkDocs 文件時
 
+## skill 導覽
+
+- 開發任務不確定第一棒／下一棒、或兩個開發 skill 撞名不知選哪 → 叫 `dev-map`
+  （觸發：「dev 動線」「開發該用哪個 skill」）。SA／規格工作則看該 workspace 的導覽（如 `sa-map`）。
+
 # graphify
 
 - **graphify** (`~/.claude/skills/graphify/SKILL.md`) - any input to knowledge graph. Trigger: `/graphify`
