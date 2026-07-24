@@ -3,8 +3,13 @@
   "permissions": {
     "deny": [
       "Bash(rm -rf *)",
+      "Bash(rm -fr *)",
       "Bash(rm -r *)",
+      "Bash(rm -f -r *)",
+      "Bash(rm -r -f *)",
       "Bash(diskpart *)",
+      "Bash(format *)",
+      "Bash(mkfs *)",
       "Bash(shutdown *)"
     ],
     "ask": [
@@ -34,7 +39,7 @@
           {
             "type": "command",
             "command": "bash ~/.claude/hooks/notification.sh",
-            "timeout": 30
+            "timeout": 10
           }
         ]
       }

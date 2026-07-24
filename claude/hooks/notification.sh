@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # Cross-platform notification hook for Claude Code（Stop hook：完工桌面通知＋音效）
 # macOS: afplay + osascript / Linux: paplay|aplay + notify-send / Windows(Git Bash): PowerShell toast
-
-set -e
+# 契約：純通知用途，任何失敗都不得影響主流程——永遠 exit 0。
 
 TITLE="Claude Code 🤖"
 MESSAGES=(
@@ -17,50 +16,65 @@ MESSAGES=(
 )
 MESSAGE="${MESSAGES[RANDOM % ${#MESSAGES[@]}]}"
 
-# Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SOUND_FILE_WAV="$SCRIPT_DIR/notification-sound.wav"
 SOUND_FILE_AIFF="$SCRIPT_DIR/notification-sound.aiff"
 
-# Detect platform and send notification with sound
 if [[ "$OSTYPE" == "darwin"* ]]; then
-  # macOS - play sound directly and send notification
   if [[ -f "$SOUND_FILE_AIFF" ]]; then
-    afplay "$SOUND_FILE_AIFF" &
+    afplay "$SOUND_FILE_AIFF" >/dev/null 2>&1 &
   elif [[ -f "$SOUND_FILE_WAV" ]]; then
-    afplay "$SOUND_FILE_WAV" &
+    afplay "$SOUND_FILE_WAV" >/dev/null 2>&1 &
   fi
   osascript -e "display notification \"$MESSAGE\" with title \"$TITLE\"" 2>/dev/null || true
 
-elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-  # Linux - play sound and send notification
-  if [[ -f "$SOUND_FILE_WAV" ]]; then
-    if command -v paplay &> /dev/null; then
-      paplay "$SOUND_FILE_WAV" &
-    elif command -v aplay &> /dev/null; then
-      aplay -q "$SOUND_FILE_WAV" &
-    fi
+elif command -v powershell.exe >/dev/null 2>&1; then
+  # Windows（Git Bash/Cygwin/WSL 皆以 powershell.exe 存在與否判斷，不靠 OSTYPE）
+  # SoundPlayer 只吃 .wav：缺檔時先試 ffmpeg 從 .aiff 一次性轉出，之後都用轉好的檔
+  if [[ ! -f "$SOUND_FILE_WAV" && -f "$SOUND_FILE_AIFF" ]] && command -v ffmpeg >/dev/null 2>&1; then
+    ffmpeg -loglevel quiet -y -i "$SOUND_FILE_AIFF" "$SOUND_FILE_WAV" >/dev/null 2>&1 || true
   fi
-  if command -v notify-send &> /dev/null; then
-    notify-send "$TITLE" "$MESSAGE"
+  WIN_SOUND_PATH=""
+  if [[ -f "$SOUND_FILE_WAV" ]]; then
+    WIN_SOUND_PATH=$(cygpath -w "$SOUND_FILE_WAV" 2>/dev/null || echo "")
+  fi
+  # 全部包 try/catch、以 UTF-16LE EncodedCommand 執行：避開字串內插破壞與 emoji 編碼問題
+  PS_SCRIPT="
+try {
+  Add-Type -AssemblyName System.Windows.Forms -ErrorAction SilentlyContinue
+  [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
+  [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom, ContentType = WindowsRuntime] | Out-Null
+  \$xml = New-Object Windows.Data.Xml.Dom.XmlDocument
+  \$content = '<toast><visual><binding template=\"ToastText02\"><text id=\"1\">' + [System.Security.SecurityElement]::Escape('$TITLE') + '</text><text id=\"2\">' + [System.Security.SecurityElement]::Escape('$MESSAGE') + '</text></binding></visual></toast>'
+  \$xml.LoadXml(\$content)
+  \$toast = [Windows.UI.Notifications.ToastNotification]::new(\$xml)
+  [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('Claude Code').Show(\$toast)
+} catch {}
+try {
+  if ('$WIN_SOUND_PATH' -ne '' -and (Test-Path '$WIN_SOUND_PATH')) {
+    (New-Object System.Media.SoundPlayer('$WIN_SOUND_PATH')).PlaySync()
+  } else {
+    [System.Media.SystemSounds]::Notification.Play()
+    Start-Sleep -Milliseconds 600
+  }
+} catch {}
+"
+  if ENCODED=$(printf '%s' "$PS_SCRIPT" | iconv -f UTF-8 -t UTF-16LE 2>/dev/null | base64 -w0 2>/dev/null) && [[ -n "$ENCODED" ]]; then
+    powershell.exe -NoProfile -NonInteractive -EncodedCommand "$ENCODED" >/dev/null 2>&1 &
+    disown 2>/dev/null || true
   fi
 
-elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
-  # Windows (Git Bash or Cygwin) - play sound and send notification
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
   if [[ -f "$SOUND_FILE_WAV" ]]; then
-    # Convert to Windows path for PowerShell
-    WIN_SOUND_PATH=$(cygpath -w "$SOUND_FILE_WAV" 2>/dev/null || echo "$SOUND_FILE_WAV")
-    powershell.exe -Command "
-      \$player = New-Object System.Media.SoundPlayer('$WIN_SOUND_PATH')
-      \$player.Play()
-    " &
+    if command -v paplay >/dev/null 2>&1; then
+      paplay "$SOUND_FILE_WAV" >/dev/null 2>&1 &
+    elif command -v aplay >/dev/null 2>&1; then
+      aplay -q "$SOUND_FILE_WAV" >/dev/null 2>&1 &
+    fi
   fi
-  powershell.exe -NoProfile -Command "
-    [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
-    [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom, ContentType = WindowsRuntime] | Out-Null
-    \$xml = New-Object Windows.Data.Xml.Dom.XmlDocument
-    \$xml.LoadXml('<toast><visual><binding template=\"ToastText02\"><text id=\"1\">$TITLE</text><text id=\"2\">$MESSAGE</text></binding></visual></toast>')
-    \$toast = [Windows.UI.Notifications.ToastNotification]::new(\$xml)
-    [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('Claude Code').Show(\$toast)
-  "
+  if command -v notify-send >/dev/null 2>&1; then
+    notify-send "$TITLE" "$MESSAGE" 2>/dev/null || true
+  fi
 fi
+
+exit 0
