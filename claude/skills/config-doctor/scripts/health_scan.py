@@ -130,7 +130,8 @@ def scan_layer(root: Path, tag: str) -> dict:
                 check_skill_dir(d, f"{tag}/skills")
     check_rules(root / "rules", f"{tag}/rules")
     check_agents(root / "agents", f"{tag}/agents")
-    for sub in ("skills", "rules", "agents", "hooks", "scripts", "designs"):
+    # agents/ 空目錄由 check_agents 回報，此處跳過避免雙報
+    for sub in ("skills", "rules", "hooks", "scripts", "designs"):
         base = root / sub
         if not base.exists():
             continue

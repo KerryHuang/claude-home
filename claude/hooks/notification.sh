@@ -4,6 +4,7 @@
 # 契約：純通知用途，任何失敗都不得影響主流程——永遠 exit 0。
 
 TITLE="Claude Code 🤖"
+# 注意：訊息文案禁用單引號（'）——會提前閉合 PowerShell 字面導致腳本破壞
 MESSAGES=(
   "做好了！來驗收一下吧 ✅"
   "嘿～你的 code 好了喔 🛠️"
@@ -19,6 +20,16 @@ MESSAGE="${MESSAGES[RANDOM % ${#MESSAGES[@]}]}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SOUND_FILE_WAV="$SCRIPT_DIR/notification-sound.wav"
 SOUND_FILE_AIFF="$SCRIPT_DIR/notification-sound.aiff"
+
+# 背景執行且脫離行程群組（防 Stop hook 返回後被整組回收）；無 setsid 退回 & + disown
+run_detached() {
+  if command -v setsid >/dev/null 2>&1; then
+    setsid "$@" >/dev/null 2>&1 &
+  else
+    "$@" >/dev/null 2>&1 &
+    disown 2>/dev/null || true
+  fi
+}
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
   if [[ -f "$SOUND_FILE_AIFF" ]]; then
@@ -36,9 +47,9 @@ elif command -v powershell.exe >/dev/null 2>&1; then
   fi
   WIN_SOUND_PATH=""
   if [[ -f "$SOUND_FILE_WAV" ]]; then
-    WIN_SOUND_PATH=$(cygpath -w "$SOUND_FILE_WAV" 2>/dev/null || echo "")
+    WIN_SOUND_PATH=$(cygpath -w "$SOUND_FILE_WAV" 2>/dev/null || wslpath -w "$SOUND_FILE_WAV" 2>/dev/null || echo "")
   fi
-  # 全部包 try/catch、以 UTF-16LE EncodedCommand 執行：避開字串內插破壞與 emoji 編碼問題
+  # 全部包 try/catch；優先以 UTF-16LE EncodedCommand 執行（避開字串內插破壞與 emoji 編碼問題）
   PS_SCRIPT="
 try {
   Add-Type -AssemblyName System.Windows.Forms -ErrorAction SilentlyContinue
@@ -60,8 +71,10 @@ try {
 } catch {}
 "
   if ENCODED=$(printf '%s' "$PS_SCRIPT" | iconv -f UTF-8 -t UTF-16LE 2>/dev/null | base64 -w0 2>/dev/null) && [[ -n "$ENCODED" ]]; then
-    powershell.exe -NoProfile -NonInteractive -EncodedCommand "$ENCODED" >/dev/null 2>&1 &
-    disown 2>/dev/null || true
+    run_detached powershell.exe -NoProfile -NonInteractive -EncodedCommand "$ENCODED"
+  else
+    # 缺 iconv/base64 時退回明碼 -Command（emoji 可能亂碼，但至少有通知與音效）
+    run_detached powershell.exe -NoProfile -NonInteractive -Command "$PS_SCRIPT"
   fi
 
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
