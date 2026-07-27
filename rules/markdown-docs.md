@@ -1,3 +1,9 @@
+---
+paths:
+  - "**/*.md"
+  - "**/*.mdx"
+---
+
 # Markdown／文件
 
 - 文件用繁體中文撰寫，遵循 rules/chinese-writing.md。

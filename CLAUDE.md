@@ -11,15 +11,15 @@
 @shared/engineering.md
 @shared/context-management.md
 
-## 規則索引（進入情境時先讀對應規則）
+## 規則索引
+
+技術／語言／文件類規則已用 `paths` frontmatter **依檔案類型自動載入**，不需手動先讀：
+`.cs/.csproj`→dotnet、`.vue/.ts/.tsx`→vue-typescript、`.py`→python、`.md`→markdown-docs＋chinese-writing。
+
+兩條**活動觸發**（非依檔案）的安全規則常駐，動手前自行對照：
 
 - `rules/git-safety.md` — 任何 git staging／force push／reset 前
-- `rules/chinese-writing.md` — 撰寫中文文件／文案時
-- `rules/dotnet.md` — .NET / C# 專案
-- `rules/vue-typescript.md` — Vue 3 + TypeScript 專案
-- `rules/python.md` — Python 專案
 - `rules/mssql-safety.md` — 對 SQL Server 下任何查詢／維運指令前
-- `rules/markdown-docs.md` — 撰寫 Markdown／MkDocs 文件時
 
 ## skill 導覽
 

@@ -1,3 +1,10 @@
+---
+paths:
+  - "**/*.vue"
+  - "**/*.ts"
+  - "**/*.tsx"
+---
+
 # Vue 3 + TypeScript
 
 - 一律 Composition API + `<script setup lang="ts">`；不寫 Options API 新碼。

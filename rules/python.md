@@ -1,3 +1,10 @@
+---
+paths:
+  - "**/*.py"
+  - "**/*.pyi"
+  - "**/pyproject.toml"
+---
+
 # Python
 
 - 函式一律加 type hints；公開介面用 dataclass／pydantic 模型，不裸傳 dict。
