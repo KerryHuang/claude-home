@@ -9,7 +9,10 @@ disable-model-invocation: true
 
 角色：agent-system 健檢醫生兼修復編排者。對象：User 層 `~/.claude`＋當前專案 `.claude`（含根 CLAUDE.md）；帶 `--marketplace <目錄>` 時加掃自家 plugin 源碼的結構與版本一致性。**不審**第三方 plugin 內容（只查與自家設定的衝突）、不改 plugin cache。
 
-**與內建 `/doctor` 分工**：安裝健康、版本是否最新、擴充使用率／未使用清理、被拒指令 allowlist 交給內建 `/doctor`；本 skill 專注**設定內容本身的正確性與品質**——frontmatter、斷鏈、跨層重複雙載、觸發詞撞名、permissions 衝突、時效性。兩者 permissions 檢查有交集，本 skill 只從「規則之間是否矛盾／冗餘」角度看，不重做使用率統計。
+**與內建 `/doctor` 分工**：`/doctor` 是第一層、本 skill 是第二層——**先跑 `/doctor`，再跑本 skill**。
+交給 `/doctor`：安裝健康、版本、擴充使用率與未使用清理、被拒指令 allowlist、hook 計時、settings 與 agent frontmatter 的可解析性，以及 CLAUDE.md 的「可推導內容修剪」與「改延遲載入」。
+本 skill 只做 `/doctor` 不查的**跨層一致性與時效性**：跨層同名檔與分層引用漂移、觸發詞撞名、permissions 規則之間的矛盾與冗餘（不重做使用率統計）、設定 ↔ 內建 system prompt 的重疊與牴觸、rules／skills 指涉的路徑與旗標是否還存在、`--marketplace` 的自家 plugin 結構與版本一致性。
+CLAUDE.md 兩邊都碰但角度不同：`/doctor` 問「這段能不能從 codebase 推導出來」，本 skill 問「這段跟別層或內建有沒有打架」——重疊的結論以先跑的 `/doctor` 為準，不重複提案。
 
 `--quick`：只跑 Phase 1 結構掃描並回報，不進後續階段。
 
@@ -45,8 +48,11 @@ python ${CLAUDE_SKILL_DIR}/scripts/health_scan.py --project <專案根目錄> [-
 - CLAUDE.md ↔ rules 逐字重複（雙載）；兩層 CLAUDE.md 之間重複。
 - 觸發詞撞名：本地 skills 與各 plugin skills 的 description 對照；已有導覽 skill 管理撞名者標「受管理」。
 - permissions 合併視角：全放行＋deny 覆蓋度、ask 守門、與 rules 的矛盾、跨層冗餘。
+- **設定 ↔ 內建 system prompt 重疊**：CLAUDE.md／rules／shared 的每一條，對照本 session 已載入的
+  內建指示。**這項必須主線自己做**——subagent 的 system prompt 不同，派出去等於拿錯基準比對。
+  冗餘（內建已明載同義）列 P2、牴觸（內建要求相反行為）列 P1。刪冗餘不改變行為，因為內建在管。
 
-**驗證**：每筆衝突都指出兩個具體位置（檔案＋行）。
+**驗證**：每筆衝突都指出兩個具體位置（檔案＋行）；與內建重疊者改附內建原文片段當對照側。
 
 ## Phase 3：內容品質審查
 
@@ -80,3 +86,5 @@ python ${CLAUDE_SKILL_DIR}/scripts/health_scan.py --project <專案根目錄> [-
 - 「plugin source 改好了，收工」→ cache 不自動更新，未提醒使用者更新＝修了等於沒修。
 - 「命名／語言不合房規，列缺陷」→ 先查使用者的慣例豁免記憶。
 - 「reviewer 說有問題就照改」→ reviewer 建議也要驗證（實地查檔），確認非誤報再改。
+- 「這條規則寫得像鐵律，一定有用」→ 先問它是不是內建 system prompt 已經在管。
+  規則寫得越斬釘截鐵，越可能是為舊模型寫的、現在只剩下製造衝突。
