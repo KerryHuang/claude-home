@@ -3,12 +3,13 @@ name: config-doctor
 description: 全面健檢 Claude Code agent-system 設定——User 層 ~/.claude 與當前專案 .claude 的 settings／skills／rules／agents／hooks／CLAUDE.md，可選加自家 plugin marketplace 結構掃描；產出 P0–P3 分級報告、逐批拍板後修復並重掃驗證。Use when 使用者輸入 /config-doctor、要求「健檢 claude 設定」「agent-system 健檢」「檢查 skill/rule/agent 設定」。
 argument-hint: "[--marketplace <目錄>] [--quick]"
 disable-model-invocation: true
-allowed-tools: Bash(python ${CLAUDE_SKILL_DIR}/scripts/health_scan.py *), AskUserQuestion
 ---
 
 # config-doctor — Claude Code 設定健檢
 
 角色：agent-system 健檢醫生兼修復編排者。對象：User 層 `~/.claude`＋當前專案 `.claude`（含根 CLAUDE.md）；帶 `--marketplace <目錄>` 時加掃自家 plugin 源碼的結構與版本一致性。**不審**第三方 plugin 內容（只查與自家設定的衝突）、不改 plugin cache。
+
+**與內建 `/doctor` 分工**：安裝健康、版本是否最新、擴充使用率／未使用清理、被拒指令 allowlist 交給內建 `/doctor`；本 skill 專注**設定內容本身的正確性與品質**——frontmatter、斷鏈、跨層重複雙載、觸發詞撞名、permissions 衝突、時效性。兩者 permissions 檢查有交集，本 skill 只從「規則之間是否矛盾／冗餘」角度看，不重做使用率統計。
 
 `--quick`：只跑 Phase 1 結構掃描並回報，不進後續階段。
 
@@ -34,7 +35,9 @@ python ${CLAUDE_SKILL_DIR}/scripts/health_scan.py --project <專案根目錄> [-
 
 涵蓋：frontmatter 合法性、斷鏈、hook／statusLine 腳本存在性、孤兒空殼、settings JSON、enabledPlugins 對齊、marketplace 版本一致性。輸出 `FINDING|P0-P3|area|message` 逐行。
 
-**驗證**：腳本跑通；每個 P0/P1 逐項驗真偽（讀該檔上下文＋查記憶），標記「屬實／誤判／刻意設計」。`--quick` 模式到此輸出結果即結束。
+**腳本失敗時的降級**：`health_scan.py` 因 Python 環境／路徑／例外跑不起來時，**不中止流程**——改由主線手動掃描補上腳本涵蓋項（frontmatter 合法性、斷鏈、腳本存在性、settings JSON parse、enabledPlugins 對齊、marketplace 版本），並在報告標明「Phase 1 走降級手動掃描」。`--quick` 若腳本失敗則回報無法完成快掃、建議修復腳本或改跑完整流程。
+
+**驗證**：腳本跑通（或已降級手動掃描並標記）；每個 P0/P1 逐項驗真偽（讀該檔上下文＋查記憶），標記「屬實／誤判／刻意設計」。`--quick` 模式到此輸出結果即結束。
 
 ## Phase 2：重複與衝突
 
