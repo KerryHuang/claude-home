@@ -19,7 +19,7 @@ remove_dir_items() {  # $1=repo 來源目錄  $2=目標相對目錄
   done < <(cd "$src" && find . -type f | sed 's|^\./||')
 }
 
-echo "移除 claude-home ← $TARGET（settings.json 與備份不動）"
+echo "移除 claude-home ← ${TARGET}（settings.json 與備份不動）"
 remove_if_same  "$REPO_DIR/CLAUDE.md"            "CLAUDE.md"
 remove_dir_items "$REPO_DIR/shared"              "shared"
 remove_dir_items "$REPO_DIR/rules"               "rules"

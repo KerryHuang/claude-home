@@ -20,7 +20,7 @@ back_file() {  # $1=repo 絕對路徑  $2=目標相對路徑
   [ -e "$src" ] || return 0          # 本機沒有就不動 repo（刪除一律人工判斷）
   if [ ! -e "$dst" ]; then
     CHANGED=$((CHANGED + 1))
-    echo "NEW:  $rel（repo 沒有，本機才有）"
+    echo "NEW:  ${rel}（repo 沒有，本機才有）"
     [ "$APPLY" -eq 1 ] && { mkdir -p "$(dirname "$dst")"; cp "$src" "$dst"; }
     return 0
   fi

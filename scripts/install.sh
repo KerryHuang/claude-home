@@ -21,7 +21,7 @@ install_file() {  # $1=來源絕對路徑  $2=目標相對路徑
   local src="$1" rel="$2" dst="$TARGET/$2"
   if [ "$CHECK" -eq 1 ]; then
     if [ ! -e "$dst" ]; then
-      echo "MISSING: $rel（本機沒有，install.sh 會裝上）"; DIFFS=$((DIFFS + 1))
+      echo "MISSING: ${rel}（本機沒有，install.sh 會裝上）"; DIFFS=$((DIFFS + 1))
     elif ! cmp -s "$src" "$dst"; then
       echo "DIFF:    $rel"
       echo "         repo   $(ch_mtime "$src")  |  本機 $(ch_mtime "$dst")"
@@ -41,13 +41,13 @@ install_file() {  # $1=來源絕對路徑  $2=目標相對路徑
 
 install_dir() {   # $1=來源目錄  $2=目標相對目錄
   local src="$1" rel="$2" f
-  [ -d "$src" ] || { [ "$CHECK" -eq 1 ] || echo "SKIP: $rel（來源目錄不存在）"; return 0; }
+  [ -d "$src" ] || { [ "$CHECK" -eq 1 ] || echo "SKIP: ${rel}（來源目錄不存在）"; return 0; }
   while IFS= read -r f; do
     install_file "$src/$f" "$rel/$f"
   done < <(cd "$src" && find . -type f ! -name '*.pyc' ! -path './__pycache__/*' | sed 's|^\./||')
 }
 
-[ "$CHECK" -eq 1 ] && echo "比對 claude-home ↔ $TARGET（只報不改）" || echo "安裝 claude-home → $TARGET"
+[ "$CHECK" -eq 1 ] && echo "比對 claude-home ↔ ${TARGET}（只報不改）" || echo "安裝 claude-home → $TARGET"
 while IFS='|' read -r from to kind; do
   [ -n "$from" ] || continue
   if [ "$kind" = "dir" ]; then
