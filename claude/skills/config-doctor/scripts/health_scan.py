@@ -111,7 +111,7 @@ def check_settings(sp: Path, layer: str) -> dict:
     for _event, groups in (cfg.get("hooks") or {}).items():
         for g in groups:
             for h in g.get("hooks", []):
-                for token in re.findall(r"[$\w~{}:\\/.-]+\.(?:sh|py|ps1|js)", h.get("command", "")):
+                for token in re.findall(r"[$\w~{}:\\/.-]+\.(?:mjs|cjs|sh|py|ps1|js|ts)", h.get("command", "")):
                     resolved = resolve_path(token)
                     if resolved is None:
                         add("P3", layer, f"hook 路徑含無法靜態解析的變數，未驗證存在性：{token}（{sp.name}）")
@@ -119,7 +119,7 @@ def check_settings(sp: Path, layer: str) -> dict:
                         add("P0", layer, f"hook 指向不存在的腳本：{token}（{sp.name}）")
     sl = cfg.get("statusLine", {})
     if isinstance(sl, dict) and sl.get("command"):
-        for token in re.findall(r"[$\w~{}:\\/.-]+\.(?:sh|py|ps1|js)", sl["command"]):
+        for token in re.findall(r"[$\w~{}:\\/.-]+\.(?:mjs|cjs|sh|py|ps1|js|ts)", sl["command"]):
             resolved = resolve_path(token)
             if resolved is None:
                 add("P3", layer, f"statusLine 路徑含無法靜態解析的變數，未驗證存在性：{token}")
