@@ -91,6 +91,25 @@ def _fail(sid):
         pass
 
 
+def already_named(sid):
+    """這個 session 已經有名字就不碰——使用者手動 /rename 的、或 Claude Code 本體
+    generateSessionName 自動取的，都算。只有名稱為空才由本 hook 接手。
+    名稱寫在 ~/.claude/sessions/<pid>.json，以 sessionId 比對。"""
+    d = Path(os.path.expanduser("~/.claude")) / "sessions"
+    try:
+        files = list(d.glob("*.json"))
+    except OSError:
+        return False
+    for f in files:
+        try:
+            rec = json.loads(f.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if rec.get("sessionId") == sid:
+            return bool((rec.get("name") or "").strip())
+    return False
+
+
 def read_head(transcript, limit=3000):
     """抽 transcript 開頭的對話文字。"""
     parts = []
@@ -186,6 +205,12 @@ def main():
         return
 
     STATE.mkdir(parents=True, exist_ok=True)
+
+    # 已有名字就不覆寫（使用者指示）——標記完成，不再產也不再套用
+    if already_named(sid):
+        (STATE / f"{sid}.done").touch()
+        return
+
     done = STATE / f"{sid}.done"
     title_f = STATE / f"{sid}.title"
     count_f = STATE / f"{sid}.count"
