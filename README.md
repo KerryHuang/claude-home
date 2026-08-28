@@ -84,6 +84,22 @@ curl -fsSL https://raw.githubusercontent.com/KerryHuang/claude-home/main/scripts
 # 或：git -C ~/claude-home pull && bash ~/claude-home/scripts/install.sh --force
 ```
 
+## 漂移檢查與回流
+
+install.sh 是**複製式**（不是 symlink），兩個方向都不會自動同步——本機改了不會回到 repo，repo 改了不跑 install 也不生效。實務上會漂移，用這兩個指令讓它可見：
+
+```bash
+bash scripts/install.sh --check   # 只比對不改：列出差異檔、repo 的 commit 時間與本機 mtime
+bash scripts/sync-back.sh         # 反向比對（~/.claude → repo），預設 dry-run
+bash scripts/sync-back.sh --apply # 真的回流；要求 repo 工作區乾淨
+```
+
+判斷方向時**看 repo 的 commit 時間與實際內容，不要看本機 mtime**：`git pull` 與 `install.sh` 都會把檔案 mtime 重置成當下，據此判斷會把另一台的改動無聲蓋掉。
+
+檔案對照表在 `scripts/manifest.sh`，兩支腳本共用同一份，避免清單自己先漂移。`settings.json` 不在表內——它由 Claude Code 自己寫入且含 machine-specific 內容，只能走 install.sh 的深度合併（既有值優先、清單去重聯集）。
+
+> ⚠ 合併是**聯集**：範本裡刪掉的規則不會從既有機器的 `settings.json` 消失。收窄類的變更（例如把某條 deny 改窄）只對全新安裝生效，既有機器要手動移除舊條目。
+
 > 新設定在**下一個 Claude Code session** 才生效（CLAUDE.md 於 session 啟動時載入）。
 
 ## 移除
