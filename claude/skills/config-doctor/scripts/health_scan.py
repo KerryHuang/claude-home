@@ -111,13 +111,19 @@ def check_settings(sp: Path, layer: str) -> dict:
     for _event, groups in (cfg.get("hooks") or {}).items():
         for g in groups:
             for h in g.get("hooks", []):
-                for token in re.findall(r"[\w~:\\/.-]+\.(?:sh|py|ps1|js)", h.get("command", "")):
-                    if not Path(token.replace("~", str(Path.home()))).exists():
+                for token in re.findall(r"[$\w~{}:\\/.-]+\.(?:sh|py|ps1|js)", h.get("command", "")):
+                    resolved = resolve_path(token)
+                    if resolved is None:
+                        add("P3", layer, f"hook 路徑含無法靜態解析的變數，未驗證存在性：{token}（{sp.name}）")
+                    elif not Path(resolved).exists():
                         add("P0", layer, f"hook 指向不存在的腳本：{token}（{sp.name}）")
     sl = cfg.get("statusLine", {})
     if isinstance(sl, dict) and sl.get("command"):
-        for token in re.findall(r"[\w~:\\/.-]+\.(?:sh|py|ps1|js)", sl["command"]):
-            if not Path(token.replace("~", str(Path.home()))).exists():
+        for token in re.findall(r"[$\w~{}:\\/.-]+\.(?:sh|py|ps1|js)", sl["command"]):
+            resolved = resolve_path(token)
+            if resolved is None:
+                add("P3", layer, f"statusLine 路徑含無法靜態解析的變數，未驗證存在性：{token}")
+            elif not Path(resolved).exists():
                 add("P0", layer, f"statusLine 指向不存在的腳本：{token}")
     return cfg
 
@@ -153,6 +159,13 @@ def check_claude_md(cm: Path, base: Path, tag: str) -> None:
             add("P0", tag, f"文字索引斷鏈：{ref}")
 
 
+def resolve_path(token: str):
+    """展開路徑中的家目錄寫法。仍含無法靜態解析的變數（$CLAUDE_PROJECT_DIR 等）時回 None。"""
+    home = str(Path.home())
+    t = token.replace("${HOME}", home).replace("$HOME", home).replace("~", home)
+    return None if "$" in t else t
+
+
 def check_plugins_state(user: Path, cfgs: list[dict]) -> dict[str, str]:
     reg = user / "plugins/installed_plugins.json"
     installed: dict[str, str] = {}
@@ -166,9 +179,15 @@ def check_plugins_state(user: Path, cfgs: list[dict]) -> dict[str, str]:
                 installed[full] = rec["version"]
             if rec.get("scope") == "user":
                 installed.setdefault(full, rec["version"])
+    # directory 來源的 marketplace 就地載入，不寫進 installed_plugins.json，不該報未安裝
+    dir_markets = {
+        n for cfg in cfgs
+        for n, m in (cfg.get("extraKnownMarketplaces") or {}).items()
+        if (m.get("source") or {}).get("source") == "directory"
+    }
     for cfg in cfgs:
         for name, enabled in (cfg.get("enabledPlugins") or {}).items():
-            if enabled and name not in installed:
+            if enabled and name not in installed and name.split("@")[-1] not in dir_markets:
                 add("P1", "plugins", f"enabledPlugins 啟用了未安裝的 plugin：{name}")
     return installed
 
