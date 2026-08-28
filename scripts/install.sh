@@ -20,6 +20,7 @@ install_file() {  # $1=來源絕對路徑  $2=目標相對路徑
 
 install_dir() {   # $1=來源目錄  $2=目標相對目錄
   local src="$1" rel="$2" f
+  [ -d "$src" ] || { echo "SKIP: $rel（來源目錄不存在）"; return 0; }
   while IFS= read -r f; do
     install_file "$src/$f" "$rel/$f"
   done < <(cd "$src" && find . -type f | sed 's|^\./||')

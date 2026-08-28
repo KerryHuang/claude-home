@@ -62,14 +62,14 @@ pct_color() {
   fi
 }
 
-# === Nerd Font Icons ===
-I_MODEL=$'\xef\x80\xa0'
-I_REPO=$'\xef\x81\xbc'
-I_TREE=$'\xef\x86\xbb'
-I_BRANCH=$'\xef\x90\x98'
-I_CTX=$'\xef\x83\xa4'
-I_CLOCK=$'\xef\x80\x97'
-I_CALENDAR=$'\xef\x81\xb3'
+# === Emoji Icons ===
+I_MODEL='🤖'
+I_REPO='📦'
+I_TREE='🌳'
+I_BRANCH='🌿'
+I_CTX='🧠'
+I_CLOCK='⏳'
+I_CALENDAR='📅'
 
 if [ "$IS_WORKTREE" = true ]; then
   I_REPO_USE="$I_TREE"
@@ -110,47 +110,49 @@ format_reset() {
   fi
 }
 
-# === 渲染（2 行）===
+# === 渲染（每項一行）===
 
-# --- 第 1 行：repo / branch · model · context ---
+# --- 第 1 行：repo / branch ---
 HAS_GIT=false
 if [ -n "$REPO_NAME" ] || [ -n "$GIT_BRANCH" ]; then
   HAS_GIT=true
+  printf '%b%s%b ' "$C_REPO_USE" "$I_REPO_USE" "$C_RESET"
   [ -n "$REPO_NAME" ] && printf '%b%s%b' "$C_REPO_USE" "$REPO_NAME" "$C_RESET"
   if [ -n "$REPO_NAME" ] && [ -n "$GIT_BRANCH" ]; then
     printf '%b  /  %b' "$C_DIM" "$C_RESET"
   fi
   [ -n "$GIT_BRANCH" ] && printf '%b%s%b' "$C_BRANCH_USE" "$GIT_BRANCH" "$C_RESET"
+  printf '\n'
 fi
 
-[ "$HAS_GIT" = true ] && printf '%b  ·  %b' "$C_DIM" "$C_RESET"
-
+# --- 第 2 行：model · context ---
 ctx_bar=$(make_bar "$CTX_INT")
 ctx_color=$(pct_color "$CTX_INT")
-printf '%b%s%b  %s %b%d%%%b' \
-  "$C_MODEL" "$MODEL" "$C_RESET" \
+printf '%b%s %s%b  %s %b%d%%%b' \
+  "$C_MODEL" "$I_MODEL" "$MODEL" "$C_RESET" \
   "$ctx_bar" "$ctx_color" "$CTX_INT" "$C_RESET"
 
-# --- 第 2 行：session · week ---
+# --- 第 3 行：session ---
 if [ -n "$FIVE_H_PCT" ]; then
   printf '\n'
   pct5=${FIVE_H_PCT%.*}
   bar5=$(make_bar "$FIVE_H_PCT")
   rst5=$(format_reset "$FIVE_H_RESET")
   c5=$(pct_color "$pct5")
-  printf '%bsession%b %s %b%d%%%b %b(%s)%b' \
-    "$C_DIM" "$C_RESET" \
+  printf '%b%s session%b %s %b%d%%%b %b(%s)%b' \
+    "$C_DIM" "$I_CLOCK" "$C_RESET" \
     "$bar5" "$c5" "$pct5" "$C_RESET" \
     "$C_DIM" "$rst5" "$C_RESET"
 
+  # --- 第 4 行：week ---
   if [ -n "$WEEK_PCT" ]; then
-    printf '%b   ·   %b' "$C_DIM" "$C_RESET"
+    printf '\n'
     pctW=${WEEK_PCT%.*}
     barW=$(make_bar "$WEEK_PCT")
     rstW=$(format_reset "$WEEK_RESET")
     cW=$(pct_color "$pctW")
-    printf '%bweek%b %s %b%d%%%b %b(%s)%b' \
-      "$C_DIM" "$C_RESET" \
+    printf '%b%s week%b %s %b%d%%%b %b(%s)%b' \
+      "$C_DIM" "$I_CALENDAR" "$C_RESET" \
       "$barW" "$cW" "$pctW" "$C_RESET" \
       "$C_DIM" "$rstW" "$C_RESET"
   fi
