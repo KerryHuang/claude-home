@@ -32,8 +32,12 @@ CLAUDE.md 兩邊都碰但角度不同：`/doctor` 問「這段能不能從 codeb
 
 ## Phase 1：結構掃描（機械）
 
-```
-python ${CLAUDE_SKILL_DIR}/scripts/health_scan.py --project <專案根目錄> [--marketplace <目錄>]
+`<PY>` = 本機 python 直譯器。**不要寫死 `python`**：macOS 只有 `python3`，Windows Git Bash
+多半只有 `python`——用 `$(command -v python || command -v python3)` 取存在的那個。
+腳本只用標準庫（argparse／json／re／collections／pathlib），任何 3.x 直譯器都跑得動。
+
+```bash
+<PY> ${CLAUDE_SKILL_DIR}/scripts/health_scan.py --project <專案根目錄> [--marketplace <目錄>]
 ```
 
 涵蓋：frontmatter 合法性、斷鏈、hook／statusLine 腳本存在性、孤兒空殼、settings JSON、enabledPlugins 對齊、marketplace 版本一致性。輸出 `FINDING|P0-P3|area|message` 逐行。
