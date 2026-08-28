@@ -35,10 +35,19 @@ MAX_ATTEMPTS = 2       # 產標題失敗的重試次數上限
 MODEL = "haiku"
 BAD_MARKERS = ("Not logged in", "Error", "error:", "usage:")
 GEN_PROMPT = (
-    "以下是一段 Claude Code 對話的開頭。寫一個繁體中文標題，"
+    "以下是一段 Claude Code 對話的開頭。寫一個標題，"
     "描述這段對話在做什麼（有票號或功能代碼就放進去）。\n"
+    "必須用台灣繁體中文（正體字）。出現任何簡體字都是錯的，"
+    "例如「设定」要寫「設定」、「数据」要寫「資料」、「问题」要寫「問題」。\n"
     "長度上限：純中文 10 字、純英文 20 字元、中英混合 15 字。\n"
     "只輸出標題本身：不要引號、不要句號、不要任何解釋。\n\n---\n"
+)
+
+# 繁體幾乎不會出現的簡體字（刻意排除「后／面／里／干」等繁簡同形或兩用字，避免誤殺）
+SIMPLIFIED = set(
+    "设为发这来时国样长门问题实现处开关电脑网页数据库转换类单据资说读权统报错"
+    "进认识规总构会义从优传众体档显应该变让边员检测项务备联询选编码简状态术图"
+    "断执归载释试验证记录参组装请继续经过价伤"
 )
 
 
@@ -143,6 +152,9 @@ def generate(sid, transcript):
                     err = f"rejected: {cand[:100]}"
                 elif len(cand) > MAX_RAW:
                     err = f"too long: {cand[:80]}"
+                elif SIMPLIFIED & set(cand):
+                    # 簡體混入：丟棄讓下一輪重產，重試用盡就不命名（寧可沒有也不要簡體）
+                    err = f"simplified: {''.join(sorted(SIMPLIFIED & set(cand)))} in {cand}"
                 else:
                     title = _clamp(cand)
 

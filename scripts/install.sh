@@ -1,18 +1,39 @@
 #!/usr/bin/env bash
+# repo → ~/.claude。反向回流用 sync-back.sh。
 set -euo pipefail
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TARGET="${CLAUDE_HOME:-$HOME/.claude}"
-FORCE=0; [ "${1:-}" = "--force" ] && FORCE=1
+. "$REPO_DIR/scripts/manifest.sh"
+
+FORCE=0; CHECK=0
+for a in "$@"; do
+  case "$a" in
+    --force) FORCE=1 ;;
+    --check) CHECK=1 ;;
+    *) echo "用法：install.sh [--force] [--check]"; exit 2 ;;
+  esac
+done
 STAMP="$(date +%Y%m%d-%H%M%S)"
 BACKUP="$TARGET/backups/claude-home-$STAMP"
+DIFFS=0
 
 install_file() {  # $1=來源絕對路徑  $2=目標相對路徑
   local src="$1" rel="$2" dst="$TARGET/$2"
+  if [ "$CHECK" -eq 1 ]; then
+    if [ ! -e "$dst" ]; then
+      echo "MISSING: $rel（本機沒有，install.sh 會裝上）"; DIFFS=$((DIFFS + 1))
+    elif ! cmp -s "$src" "$dst"; then
+      echo "DIFF:    $rel"
+      echo "         repo   $(ch_mtime "$src")  |  本機 $(ch_mtime "$dst")"
+      DIFFS=$((DIFFS + 1))
+    fi
+    return 0
+  fi
   if [ -e "$dst" ] && ! cmp -s "$src" "$dst"; then
     if [ "$FORCE" -eq 1 ]; then
       mkdir -p "$BACKUP/$(dirname "$rel")"; cp "$dst" "$BACKUP/$rel"
     else
-      echo "SKIP: $rel 已存在且內容不同（用 --force 覆蓋，會先備份）"; return 0
+      echo "SKIP: $rel 已存在且內容不同（--force 覆蓋會先備份；反向請用 sync-back.sh）"; return 0
     fi
   fi
   mkdir -p "$(dirname "$dst")"; cp "$src" "$dst"; echo "OK:   $rel"
@@ -20,20 +41,28 @@ install_file() {  # $1=來源絕對路徑  $2=目標相對路徑
 
 install_dir() {   # $1=來源目錄  $2=目標相對目錄
   local src="$1" rel="$2" f
-  [ -d "$src" ] || { echo "SKIP: $rel（來源目錄不存在）"; return 0; }
+  [ -d "$src" ] || { [ "$CHECK" -eq 1 ] || echo "SKIP: $rel（來源目錄不存在）"; return 0; }
   while IFS= read -r f; do
     install_file "$src/$f" "$rel/$f"
-  done < <(cd "$src" && find . -type f | sed 's|^\./||')
+  done < <(cd "$src" && find . -type f ! -name '*.pyc' ! -path './__pycache__/*' | sed 's|^\./||')
 }
 
-echo "安裝 claude-home → $TARGET"
-install_file "$REPO_DIR/CLAUDE.md"           "CLAUDE.md"
-install_dir  "$REPO_DIR/shared"              "shared"
-install_dir  "$REPO_DIR/rules"               "rules"
-install_dir  "$REPO_DIR/claude/skills"       "skills"
-install_dir  "$REPO_DIR/claude/agents"       "agents"
-install_dir  "$REPO_DIR/claude/hooks"        "hooks"
-install_file "$REPO_DIR/claude/statusline.sh" "statusline.sh"
+[ "$CHECK" -eq 1 ] && echo "比對 claude-home ↔ $TARGET（只報不改）" || echo "安裝 claude-home → $TARGET"
+while IFS='|' read -r from to kind; do
+  [ -n "$from" ] || continue
+  if [ "$kind" = "dir" ]; then
+    install_dir "$REPO_DIR/$from" "$to"
+  else
+    install_file "$REPO_DIR/$from" "$to"
+  fi
+done <<< "$CH_ENTRIES"
+
+if [ "$CHECK" -eq 1 ]; then
+  echo "---"
+  [ "$DIFFS" -eq 0 ] && echo "一致：repo 與本機無差異（settings.json 不在比對範圍）" \
+                     || echo "$DIFFS 個檔案有差異。repo 較舊→sync-back.sh --apply；本機較舊→install.sh --force"
+  exit 0
+fi
 
 # settings.json 深度合併（既有值優先，範本只補缺；清單去重聯集）
 PY=""
