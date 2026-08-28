@@ -1,4 +1,5 @@
 #!/bin/bash
+# Claude Code statusline — 精簡兩行版（跨平台：macOS / Linux / Git Bash）
 input=$(cat)
 
 # === JSON 解析（純 bash，不依賴 jq）===
@@ -17,7 +18,6 @@ get_section_number() {
 
 MODEL=$(get_json_string "display_name")
 CONTEXT=$(get_json_number "used_percentage")
-[ -z "$CONTEXT" ] && CONTEXT="0"
 CTX_INT=${CONTEXT%.*}
 [ -z "$CTX_INT" ] && CTX_INT=0
 
@@ -44,116 +44,79 @@ fi
 
 # === 256-color 前景 palette ===
 C_DIM='\e[38;5;240m'
-C_LABEL='\e[38;5;245m'
 C_MODEL='\e[38;5;255m'
 C_REPO='\e[38;5;110m'
 C_BRANCH='\e[38;5;78m'
-C_BRANCH_WT='\e[38;5;208m'
+C_WT='\e[38;5;208m'
 C_GREEN='\e[38;5;78m'
 C_YELLOW='\e[38;5;220m'
 C_RED='\e[38;5;167m'
 C_RESET='\e[0m'
 
 pct_color() {
-  local p="$1"
+  local p="${1:-0}"
   if [ "$p" -le 50 ]; then echo "$C_GREEN"
   elif [ "$p" -le 80 ]; then echo "$C_YELLOW"
   else echo "$C_RED"
   fi
 }
 
-# === Emoji Icons ===
-I_MODEL='🤖'
-I_REPO='📦'
-I_TREE='🌳'
-I_BRANCH='🌿'
-I_CTX='🧠'
-I_CLOCK='⏳'
-I_CALENDAR='📅'
-
-if [ "$IS_WORKTREE" = true ]; then
-  I_REPO_USE="$I_TREE"
-  C_REPO_USE="$C_BRANCH_WT"
-  C_BRANCH_USE="$C_BRANCH_WT"
-else
-  I_REPO_USE="$I_REPO"
-  C_REPO_USE="$C_REPO"
-  C_BRANCH_USE="$C_BRANCH"
-fi
-
-# === 進度條（10 格）===
+# === 進度條（6 格，精簡）===
+BAR_CELLS=6
 make_bar() {
   local p="${1%.*}"
   [ -z "$p" ] && p=0
-  local f=$((p / 10))
-  [ $f -gt 10 ] && f=10
-  local e=$((10 - f))
-  local color
+  [ "$p" -gt 100 ] && p=100
+  local f=$(( p * BAR_CELLS / 100 ))
+  [ "$f" -gt "$BAR_CELLS" ] && f=$BAR_CELLS
+  local e=$(( BAR_CELLS - f ))
+  local color bar="" empty="" i
   color=$(pct_color "$p")
-  local bar="" empty="" i
-  for ((i=0; i<f; i++)); do bar="${bar}█"; done
-  for ((i=0; i<e; i++)); do empty="${empty}░"; done
+  i=0; while [ $i -lt $f ]; do bar="${bar}█"; i=$((i+1)); done
+  i=0; while [ $i -lt $e ]; do empty="${empty}░"; i=$((i+1)); done
   printf '%b%s%b%s%b' "$color" "$bar" "$C_DIM" "$empty" "$C_RESET"
 }
 
+# 跨平台 epoch 格式化：macOS 用 date -r，GNU 用 date -d
+fmt_epoch() {
+  local ts="${1%.*}" fmt="$2"
+  date -r "$ts" +"$fmt" 2>/dev/null || date -d "@$ts" +"$fmt" 2>/dev/null || printf '?'
+}
 format_reset() {
-  local ts="$1"
+  local ts="$1" fmt="$2" now r
   [ -z "$ts" ] && { printf '?'; return; }
-  local now r
   now=$(date +%s)
-  ts=${ts%.*}
-  r=$((ts - now))
-  if [ $r -le 0 ]; then
-    printf '已重置'
-  else
-    date -d "@$ts" +'%m/%d %H:%M' 2>/dev/null || printf '?'
-  fi
+  r=$(( ${ts%.*} - now ))
+  if [ "$r" -le 0 ]; then printf '已重置'; else fmt_epoch "$ts" "$fmt"; fi
 }
 
-# === 渲染（每項一行）===
-
-# --- 第 1 行：repo / branch ---
-HAS_GIT=false
-if [ -n "$REPO_NAME" ] || [ -n "$GIT_BRANCH" ]; then
-  HAS_GIT=true
-  printf '%b%s%b ' "$C_REPO_USE" "$I_REPO_USE" "$C_RESET"
-  [ -n "$REPO_NAME" ] && printf '%b%s%b' "$C_REPO_USE" "$REPO_NAME" "$C_RESET"
-  if [ -n "$REPO_NAME" ] && [ -n "$GIT_BRANCH" ]; then
-    printf '%b  /  %b' "$C_DIM" "$C_RESET"
-  fi
-  [ -n "$GIT_BRANCH" ] && printf '%b%s%b' "$C_BRANCH_USE" "$GIT_BRANCH" "$C_RESET"
-  printf '\n'
+# === 第 1 行：repo / branch · model ===
+if [ "$IS_WORKTREE" = true ]; then
+  I_REPO='🌳'; C_REPO_USE="$C_WT"; C_BRANCH_USE="$C_WT"
+else
+  I_REPO='📦'; C_REPO_USE="$C_REPO"; C_BRANCH_USE="$C_BRANCH"
 fi
 
-# --- 第 2 行：model · context ---
-ctx_bar=$(make_bar "$CTX_INT")
-ctx_color=$(pct_color "$CTX_INT")
-printf '%b%s %s%b  %s %b%d%%%b' \
-  "$C_MODEL" "$I_MODEL" "$MODEL" "$C_RESET" \
-  "$ctx_bar" "$ctx_color" "$CTX_INT" "$C_RESET"
+if [ -n "$REPO_NAME" ] || [ -n "$GIT_BRANCH" ]; then
+  printf '%b%s %s%b' "$C_REPO_USE" "$I_REPO" "$REPO_NAME" "$C_RESET"
+  [ -n "$GIT_BRANCH" ] && printf '%b/%b%b🌿 %s%b' "$C_DIM" "$C_RESET" "$C_BRANCH_USE" "$GIT_BRANCH" "$C_RESET"
+  printf '%b · %b' "$C_DIM" "$C_RESET"
+fi
+printf '%b🤖 %s%b\n' "$C_MODEL" "$MODEL" "$C_RESET"
 
-# --- 第 3 行：session ---
+# === 第 2 行：context · session · week ===
+printf '%b🧠%b %s %b%d%%%b' "$C_DIM" "$C_RESET" "$(make_bar "$CTX_INT")" "$(pct_color "$CTX_INT")" "$CTX_INT" "$C_RESET"
+
 if [ -n "$FIVE_H_PCT" ]; then
-  printf '\n'
-  pct5=${FIVE_H_PCT%.*}
-  bar5=$(make_bar "$FIVE_H_PCT")
-  rst5=$(format_reset "$FIVE_H_RESET")
-  c5=$(pct_color "$pct5")
-  printf '%b%s session%b %s %b%d%%%b %b(%s)%b' \
-    "$C_DIM" "$I_CLOCK" "$C_RESET" \
-    "$bar5" "$c5" "$pct5" "$C_RESET" \
-    "$C_DIM" "$rst5" "$C_RESET"
+  p5=${FIVE_H_PCT%.*}
+  printf '%b  ⏳%b %s %b%d%%%b %b%s%b' \
+    "$C_DIM" "$C_RESET" "$(make_bar "$p5")" "$(pct_color "$p5")" "$p5" "$C_RESET" \
+    "$C_DIM" "$(format_reset "$FIVE_H_RESET" '%H:%M')" "$C_RESET"
+fi
 
-  # --- 第 4 行：week ---
-  if [ -n "$WEEK_PCT" ]; then
-    printf '\n'
-    pctW=${WEEK_PCT%.*}
-    barW=$(make_bar "$WEEK_PCT")
-    rstW=$(format_reset "$WEEK_RESET")
-    cW=$(pct_color "$pctW")
-    printf '%b%s week%b %s %b%d%%%b %b(%s)%b' \
-      "$C_DIM" "$I_CALENDAR" "$C_RESET" \
-      "$barW" "$cW" "$pctW" "$C_RESET" \
-      "$C_DIM" "$rstW" "$C_RESET"
-  fi
+if [ -n "$WEEK_PCT" ]; then
+  pw=${WEEK_PCT%.*}
+  printf '%b  📅%b %s %b%d%%%b %b%s%b' \
+    "$C_DIM" "$C_RESET" "$(make_bar "$pw")" "$(pct_color "$pw")" "$pw" "$C_RESET" \
+    "$C_DIM" "$(format_reset "$WEEK_RESET" '%m/%d')" "$C_RESET"
 fi

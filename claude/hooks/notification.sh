@@ -3,7 +3,8 @@
 # macOS: afplay + osascript / Linux: paplay|aplay + notify-send / Windows(Git Bash): PowerShell toast
 # 契約：純通知用途，任何失敗都不得影響主流程——永遠 exit 0。
 
-# auto-session-title 背景呼叫的子程序不通知（避免產標題時誤響）
+# 防遞迴：auto-session-title.py 背景呼叫 claude 產標題時會帶 CC_AUTO_TITLE=1，
+# 那次 Stop hook 不該再響一次通知（py hook 本身也據此跳過）。
 [[ -n "$CC_AUTO_TITLE" ]] && exit 0
 
 TITLE="Claude Code 🤖"
@@ -39,6 +40,9 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     afplay "$SOUND_FILE_AIFF" >/dev/null 2>&1 &
   elif [[ -f "$SOUND_FILE_WAV" ]]; then
     afplay "$SOUND_FILE_WAV" >/dev/null 2>&1 &
+  elif [[ -f /System/Library/Sounds/Glass.aiff ]]; then
+    # 未自備音效檔時，退回 macOS 內建系統音
+    afplay /System/Library/Sounds/Glass.aiff >/dev/null 2>&1 &
   fi
   osascript -e "display notification \"$MESSAGE\" with title \"$TITLE\"" 2>/dev/null || true
 
