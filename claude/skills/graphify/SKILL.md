@@ -5,6 +5,15 @@ description: 把任何資料夾（code、docs、論文、圖片、影音）建�
 
 # /graphify
 
+> ⚠️ **這份是 claude-home 的本機客製版，不是 graphify 上游原版。**
+> 已做的改動：所有 ```powershell fence 改為 ```bash、35 處直譯器統一為
+> `${GRAPHIFY_PYTHON:-python}`（macOS 由 `.zshrc` 指向 uv 管的那顆，Windows 未設時
+> 退回 `python`）、9 處 PowerShell 專屬語法（`$LASTEXITCODE`／`Select-Object`／
+> `Out-File`／`New-Item`／`Remove-Item`／`Get-Content`）改為 shell 中立寫法。
+> **`graphify claude install` 會覆蓋整個目錄**（`.graphify_version` 記錄上游版本），
+> 升級 graphifyy 後若跑過該指令，這些改動會全數消失——屆時請重跑
+> `claude-home/scripts/install.sh --force`，或先用 `sync-back.sh` 比對再決定方向。
+
 Turn any folder of files into a navigable knowledge graph with community detection, an honest audit trail, and three outputs: interactive HTML, GraphRAG-ready JSON, and a plain-language GRAPH_REPORT.md.
 
 ## Usage

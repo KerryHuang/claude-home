@@ -4,8 +4,8 @@
 
 Use when you've added or modified files since the last run. Only re-extracts changed files - saves tokens and time.
 
-```powershell
-python -c "
+```bash
+${GRAPHIFY_PYTHON:-python} -c "
 import sys, json
 from graphify.detect import detect_incremental, save_manifest
 from pathlib import Path
@@ -23,8 +23,8 @@ print(f'{new_total} new/changed file(s) to re-extract.')
 
 If new files exist, first check whether all changed files are code files:
 
-```powershell
-python -c "
+```bash
+${GRAPHIFY_PYTHON:-python} -c "
 import json
 from pathlib import Path
 
@@ -43,8 +43,8 @@ If `code_only` is False (any changed file is a doc/paper/image): run the full St
 
 Then:
 
-```powershell
-python -c "
+```bash
+${GRAPHIFY_PYTHON:-python} -c "
 import sys, json
 from graphify.build import build_from_json
 from graphify.export import to_json
@@ -70,8 +70,8 @@ Then run Steps 4–8 on the merged graph as normal.
 
 After Step 4, show the graph diff:
 
-```powershell
-python -c "
+```bash
+${GRAPHIFY_PYTHON:-python} -c "
 import json
 from graphify.analyze import graph_diff
 from graphify.build import build_from_json
@@ -96,7 +96,7 @@ if old_data:
 ```
 
 Before the merge step, save the old graph: `Copy-Item graphify-out/graph.json .graphify_old.json`
-Clean up after: `Remove-Item -ErrorAction SilentlyContinue .graphify_old.json`
+Clean up after: `rm -f .graphify_old.json`
 
 ---
 
@@ -104,8 +104,8 @@ Clean up after: `Remove-Item -ErrorAction SilentlyContinue .graphify_old.json`
 
 Skip Steps 1–3. Load the existing graph from `graphify-out/graph.json` and re-run clustering:
 
-```powershell
-python -c "
+```bash
+${GRAPHIFY_PYTHON:-python} -c "
 import sys, json
 from graphify.cluster import cluster, score_all
 from graphify.analyze import god_nodes, surprising_connections
@@ -148,8 +148,8 @@ Then run Steps 5–9 as normal (label communities, generate viz, benchmark, clea
 
 Start a background watcher that monitors a folder and auto-updates the graph when files change.
 
-```powershell
-python -m graphify.watch INPUT_PATH --debounce 3
+```bash
+${GRAPHIFY_PYTHON:-python} -m graphify.watch INPUT_PATH --debounce 3
 ```
 
 Replace INPUT_PATH with the folder to watch. Behavior depends on what changed:
