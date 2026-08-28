@@ -3,6 +3,9 @@
 # macOS: afplay + osascript / Linux: paplay|aplay + notify-send / Windows(Git Bash): PowerShell toast
 # 契約：純通知用途，任何失敗都不得影響主流程——永遠 exit 0。
 
+# auto-session-title 背景呼叫的子程序不通知（避免產標題時誤響）
+[[ -n "$CC_AUTO_TITLE" ]] && exit 0
+
 TITLE="Claude Code 🤖"
 # 注意：訊息文案禁用單引號（'）——會提前閉合 PowerShell 字面導致腳本破壞
 MESSAGES=(

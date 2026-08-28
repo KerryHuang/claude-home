@@ -43,6 +43,19 @@
           }
         ]
       }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'PY=$(command -v python || command -v python3); exec \"$PY\" \"$HOME/.claude/hooks/auto-session-title.py\"'",
+            "timeout": 10,
+            "statusMessage": "自動命名 session…"
+          }
+        ]
+      }
     ]
   }
 }
