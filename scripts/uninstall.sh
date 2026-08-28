@@ -14,9 +14,10 @@ remove_if_same() {  # $1=repo 來源  $2=目標相對路徑；只刪與 repo 完
 
 remove_dir_items() {  # $1=repo 來源目錄  $2=目標相對目錄
   local src="$1" rel="$2" f
+  [ -d "$src" ] || return 0
   while IFS= read -r f; do
     remove_if_same "$src/$f" "$rel/$f"
-  done < <(cd "$src" && find . -type f | sed 's|^\./||')
+  done < <(cd "$src" && find . -type f ! -name '*.pyc' ! -path './__pycache__/*' | sed 's|^\./||')
 }
 
 echo "移除 claude-home ← ${TARGET}（settings.json 與備份不動）"

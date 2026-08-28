@@ -17,3 +17,11 @@ claude/statusline.sh|statusline.sh|file'
 ch_mtime() {
   date -r "$1" '+%Y-%m-%d %H:%M' 2>/dev/null     || stat -f '%Sm' -t '%Y-%m-%d %H:%M' "$1" 2>/dev/null     || echo '?'
 }
+
+# repo 側的時間要用 git 提交時間，不能用 mtime：git pull 會把剛更新的檔案 mtime
+# 改成 pull 當下，據此判斷「誰比較新」會把對方的東西無聲蓋掉（macOS 端實測踩到）。
+ch_repo_time() {  # $1=repo 內檔案絕對路徑
+  local t
+  t="$(git -C "${REPO_DIR}" log -1 --format=%cd --date=format:'%Y-%m-%d %H:%M' -- "$1" 2>/dev/null | head -1)"
+  [ -n "${t}" ] && echo "${t} (commit)" || echo "$(ch_mtime "$1") (mtime)"
+}

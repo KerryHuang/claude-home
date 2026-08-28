@@ -24,7 +24,7 @@ install_file() {  # $1=來源絕對路徑  $2=目標相對路徑
       echo "MISSING: ${rel}（本機沒有，install.sh 會裝上）"; DIFFS=$((DIFFS + 1))
     elif ! cmp -s "$src" "$dst"; then
       echo "DIFF:    $rel"
-      echo "         repo   $(ch_mtime "$src")  |  本機 $(ch_mtime "$dst")"
+      echo "         repo   $(ch_repo_time "$src")  |  本機 $(ch_mtime "$dst") (mtime)"
       DIFFS=$((DIFFS + 1))
     fi
     return 0
@@ -60,7 +60,7 @@ done <<< "$CH_ENTRIES"
 if [ "$CHECK" -eq 1 ]; then
   echo "---"
   [ "$DIFFS" -eq 0 ] && echo "一致：repo 與本機無差異（settings.json 不在比對範圍）" \
-                     || echo "$DIFFS 個檔案有差異。repo 較舊→sync-back.sh --apply；本機較舊→install.sh --force"
+                     || echo "$DIFFS 個檔案有差異。方向看 repo 的 commit 時間與實際內容定（本機 mtime 會被 pull／install 重置，不可當依據）：repo 較舊→sync-back.sh --apply；本機較舊→install.sh --force"
   exit 0
 fi
 

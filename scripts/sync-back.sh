@@ -27,7 +27,7 @@ back_file() {  # $1=repo 絕對路徑  $2=目標相對路徑
   if ! cmp -s "$src" "$dst"; then
     CHANGED=$((CHANGED + 1))
     echo "DIFF: $rel"
-    echo "      本機 $(ch_mtime "$src")  |  repo $(ch_mtime "$dst")"
+    echo "      本機 $(ch_mtime "$src") (mtime)  |  repo $(ch_repo_time "$dst")"
     [ "$APPLY" -eq 1 ] && cp "$src" "$dst"
   fi
   return 0
