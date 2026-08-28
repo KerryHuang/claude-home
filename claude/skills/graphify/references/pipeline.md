@@ -10,20 +10,19 @@ Follow these steps in order. Do not skip steps.
 
 ### Step 1 - Ensure graphify is installed
 
-```powershell
-# Detect Python and install graphify if needed
-python -c "import graphify" 2>$null
-if ($LASTEXITCODE -ne 0) { pip install graphifyy -q 2>&1 | Select-Object -Last 3 }
-# Write interpreter path for all subsequent steps
-python -c "import sys; open('.graphify_python', 'w').write(sys.executable)"
+```bash
+# 直譯器一律用 ${GRAPHIFY_PYTHON:-python}：macOS 由 .zshrc 指向 uv 管的那顆，
+# Windows 未設時退回 python。缺套件就裝進同一顆直譯器，不要用裸 pip。
+${GRAPHIFY_PYTHON:-python} -c "import graphify" 2>/dev/null \
+  || ${GRAPHIFY_PYTHON:-python} -m pip install graphifyy -q 2>&1 | tail -3
 ```
 
 If the import succeeds, print nothing and move straight to Step 2.
 
 ### Step 2 - Detect files
 
-```powershell
-python -c "
+```bash
+${GRAPHIFY_PYTHON:-python} -c "
 import json
 from graphify.detect import detect
 from pathlib import Path
@@ -70,10 +69,10 @@ Read the top god node labels from detect output or analysis, then compose a shor
 
 Set it as `$env:GRAPHIFY_WHISPER_PROMPT` before running the transcription command.
 
-**Step 2 - Transcribe (PowerShell):**
+**Step 2 - Transcribe:**
 
-```powershell
-& (Get-Content graphify-out\.graphify_python) -c "
+```bash
+${GRAPHIFY_PYTHON:-python} -c "
 import json, os
 from pathlib import Path
 from graphify.transcribe import transcribe_all
@@ -84,11 +83,11 @@ prompt = os.environ.get('GRAPHIFY_WHISPER_PROMPT', 'Use proper punctuation and p
 
 transcript_paths = transcribe_all(video_files, initial_prompt=prompt)
 print(json.dumps(transcript_paths))
-" | Out-File -FilePath graphify-out\.graphify_transcripts.json -Encoding utf8
+" > graphify-out/.graphify_transcripts.json
 ```
 
 After transcription:
-- Read the transcript paths from `graphify-out\.graphify_transcripts.json`
+- Read the transcript paths from `graphify-out/.graphify_transcripts.json`
 - Add them to the docs list before dispatching semantic subagents in Step 3B
 - Print how many transcripts were created: `Transcribed N video file(s) -> treating as docs`
 - If transcription fails for a file, print a warning and continue with the rest
@@ -109,8 +108,8 @@ Note: Parallelizing AST + semantic saves 5-15s on large corpora. AST is determin
 
 For any code files detected, run AST extraction in parallel with Part B subagents:
 
-```powershell
-python -c "
+```bash
+${GRAPHIFY_PYTHON:-python} -c "
 import sys, json
 from graphify.extract import collect_files, extract
 from pathlib import Path
@@ -147,8 +146,8 @@ Before dispatching subagents, print a timing estimate:
 
 Before dispatching any subagents, check which files already have cached extraction results:
 
-```powershell
-python -c "
+```bash
+${GRAPHIFY_PYTHON:-python} -c "
 import json
 from graphify.cache import check_semantic_cache
 from pathlib import Path
@@ -249,8 +248,8 @@ Wait for all subagents. For each result:
 If more than half the chunks failed or are missing, stop and tell the user to re-run and ensure `subagent_type="general-purpose"` is used.
 
 Save new results to cache:
-```powershell
-python -c "
+```bash
+${GRAPHIFY_PYTHON:-python} -c "
 import json
 from graphify.cache import save_semantic_cache
 from pathlib import Path
@@ -262,8 +261,8 @@ print(f'Cached {saved} files')
 ```
 
 Merge cached + new results into `.graphify_semantic.json`:
-```powershell
-python -c "
+```bash
+${GRAPHIFY_PYTHON:-python} -c "
 import json
 from pathlib import Path
 
@@ -291,12 +290,12 @@ Path('.graphify_semantic.json').write_text(json.dumps(merged, indent=2))
 print(f'Extraction complete - {len(deduped)} nodes, {len(all_edges)} edges ({len(cached[\"nodes\"])} from cache, {len(new.get(\"nodes\",[]))} new)')
 "
 ```
-Clean up temp files: `Remove-Item -ErrorAction SilentlyContinue .graphify_cached.json, .graphify_uncached.txt, .graphify_semantic_new.json`
+Clean up temp files: `rm -f .graphify_cached.json .graphify_uncached.txt .graphify_semantic_new.json`
 
 #### Part C - Merge AST + semantic into final extraction
 
-```powershell
-python -c "
+```bash
+${GRAPHIFY_PYTHON:-python} -c "
 import sys, json
 from pathlib import Path
 
@@ -329,9 +328,9 @@ print(f'Merged: {total} nodes, {edges} edges ({len(ast[\"nodes\"])} AST + {len(s
 
 ### Step 4 - Build graph, cluster, analyze, generate outputs
 
-```powershell
-New-Item -ItemType Directory -Force -Path graphify-out | Out-Null
-python -c "
+```bash
+mkdir -p graphify-out
+${GRAPHIFY_PYTHON:-python} -c "
 import sys, json
 from graphify.build import build_from_json
 from graphify.cluster import cluster, score_all
@@ -383,8 +382,8 @@ Read `.graphify_analysis.json`. For each community key, look at its node labels 
 
 Then regenerate the report and save the labels for the visualizer:
 
-```powershell
-python -c "
+```bash
+${GRAPHIFY_PYTHON:-python} -c "
 import sys, json
 from graphify.build import build_from_json
 from graphify.cluster import score_all
@@ -425,8 +424,8 @@ If `--obsidian` was given:
 
 - If `--obsidian-dir <path>` was also given, use that path as the vault directory. Otherwise default to `graphify-out/obsidian`.
 
-```powershell
-python -c "
+```bash
+${GRAPHIFY_PYTHON:-python} -c "
 import sys, json
 from graphify.build import build_from_json
 from graphify.export import to_obsidian, to_canvas
@@ -458,8 +457,8 @@ print('  _COMMUNITY_* - overview notes with cohesion scores and dataview queries
 
 Generate the HTML graph (always, unless `--no-viz`):
 
-```powershell
-python -c "
+```bash
+${GRAPHIFY_PYTHON:-python} -c "
 import sys, json
 from graphify.build import build_from_json
 from graphify.export import to_html
@@ -485,8 +484,8 @@ else:
 
 **If `--neo4j`** - generate a Cypher file for manual import:
 
-```powershell
-python -c "
+```bash
+${GRAPHIFY_PYTHON:-python} -c "
 import sys, json
 from graphify.build import build_from_json
 from graphify.export import to_cypher
@@ -500,8 +499,8 @@ print('cypher.txt written - import with: cypher-shell < graphify-out/cypher.txt'
 
 **If `--neo4j-push <uri>`** - push directly to a running Neo4j instance. Ask the user for credentials if not provided:
 
-```powershell
-python -c "
+```bash
+${GRAPHIFY_PYTHON:-python} -c "
 import sys, json
 from graphify.build import build_from_json
 from graphify.cluster import cluster
@@ -522,8 +521,8 @@ Replace `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD` with actual values. Default 
 
 ### Step 7b - SVG export (only if --svg flag)
 
-```powershell
-python -c "
+```bash
+${GRAPHIFY_PYTHON:-python} -c "
 import sys, json
 from graphify.build import build_from_json
 from graphify.export import to_svg
@@ -544,8 +543,8 @@ print('graph.svg written - embeds in Obsidian, Notion, GitHub READMEs')
 
 ### Step 7c - GraphML export (only if --graphml flag)
 
-```powershell
-python -c "
+```bash
+${GRAPHIFY_PYTHON:-python} -c "
 import json
 from graphify.build import build_from_json
 from graphify.export import to_graphml
@@ -564,8 +563,8 @@ print('graph.graphml written - open in Gephi, yEd, or any GraphML tool')
 
 ### Step 7d - MCP server (only if --mcp flag)
 
-```powershell
-python -m graphify.serve graphify-out/graph.json
+```bash
+${GRAPHIFY_PYTHON:-python} -m graphify.serve graphify-out/graph.json
 ```
 
 This starts a stdio MCP server that exposes tools: `query_graph`, `get_node`, `get_neighbors`, `get_community`, `god_nodes`, `graph_stats`, `shortest_path`. Add to Claude Desktop or any MCP-compatible agent orchestrator so other agents can query the graph live.
@@ -586,8 +585,8 @@ To configure in Claude Desktop, add to `claude_desktop_config.json`:
 
 If `total_words` from `.graphify_detect.json` is greater than 5,000, run:
 
-```powershell
-python -c "
+```bash
+${GRAPHIFY_PYTHON:-python} -c "
 import json
 from graphify.benchmark import run_benchmark, print_benchmark
 from pathlib import Path
@@ -604,8 +603,8 @@ Print the output directly in chat. If `total_words <= 5000`, skip silently - the
 
 ### Step 9 - Save manifest, update cost tracker, clean up, and report
 
-```powershell
-python -c "
+```bash
+${GRAPHIFY_PYTHON:-python} -c "
 import json
 from pathlib import Path
 from datetime import datetime, timezone
@@ -639,8 +638,8 @@ cost_path.write_text(json.dumps(cost, indent=2))
 print(f'This run: {input_tok:,} input tokens, {output_tok:,} output tokens')
 print(f'All time: {cost[\"total_input_tokens\"]:,} input, {cost[\"total_output_tokens\"]:,} output ({len(cost[\"runs\"])} runs)')
 "
-Remove-Item -ErrorAction SilentlyContinue .graphify_detect.json, .graphify_extract.json, .graphify_ast.json, .graphify_semantic.json, .graphify_analysis.json, .graphify_labels.json
-Remove-Item -ErrorAction SilentlyContinue graphify-out/.needs_update
+rm -f .graphify_detect.json .graphify_extract.json .graphify_ast.json .graphify_semantic.json .graphify_analysis.json .graphify_labels.json
+rm -f graphify-out/.needs_update
 ```
 
 Tell the user (omit the obsidian line unless --obsidian was given):

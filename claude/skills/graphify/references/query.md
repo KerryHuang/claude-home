@@ -10,8 +10,8 @@ Two traversal modes - choose based on the question:
 | DFS | `--dfs` | "How does X reach Y?" - trace a specific chain or dependency path |
 
 First check the graph exists:
-```powershell
-python -c "
+```bash
+${GRAPHIFY_PYTHON:-python} -c "
 from pathlib import Path
 if not Path('graphify-out/graph.json').exists():
     print('ERROR: No graph found. Run /graphify <path> first to build the graph.')
@@ -28,8 +28,8 @@ Load `graphify-out/graph.json`, then:
 4. Answer using **only** what the graph contains. Quote `source_location` when citing a specific fact.
 5. If the graph lacks enough information, say so - do not hallucinate edges.
 
-```powershell
-python -c "
+```bash
+${GRAPHIFY_PYTHON:-python} -c "
 import sys, json
 from networkx.readwrite import json_graph
 import networkx as nx
@@ -119,8 +119,8 @@ Replace `QUESTION` with the user's actual question, `MODE` with `bfs` or `dfs`, 
 
 After writing the answer, save it back into the graph so it improves future queries:
 
-```powershell
-python -m graphify save-result --question "QUESTION" --answer "ANSWER" --type query --nodes NODE1 NODE2
+```bash
+${GRAPHIFY_PYTHON:-python} -m graphify save-result --question "QUESTION" --answer "ANSWER" --type query --nodes NODE1 NODE2
 ```
 
 Replace `QUESTION` with the question, `ANSWER` with your full answer text, `SOURCE_NODES` with the list of node labels you cited. This closes the feedback loop: the next `--update` will extract this Q&A as a node in the graph.
@@ -132,8 +132,8 @@ Replace `QUESTION` with the question, `ANSWER` with your full answer text, `SOUR
 Find the shortest path between two named concepts in the graph.
 
 First check the graph exists:
-```powershell
-python -c "
+```bash
+${GRAPHIFY_PYTHON:-python} -c "
 from pathlib import Path
 if not Path('graphify-out/graph.json').exists():
     print('ERROR: No graph found. Run /graphify <path> first to build the graph.')
@@ -142,8 +142,8 @@ if not Path('graphify-out/graph.json').exists():
 ```
 If it fails, stop and tell the user to run `/graphify <path>` first.
 
-```powershell
-python -c "
+```bash
+${GRAPHIFY_PYTHON:-python} -c "
 import json, sys
 import networkx as nx
 from networkx.readwrite import json_graph
@@ -194,8 +194,8 @@ Replace `NODE_A` and `NODE_B` with the actual concept names from the user. Then 
 
 After writing the explanation, save it back:
 
-```powershell
-python -m graphify save-result --question "Path from NODE_A to NODE_B" --answer "ANSWER" --type path_query --nodes NODE_A NODE_B
+```bash
+${GRAPHIFY_PYTHON:-python} -m graphify save-result --question "Path from NODE_A to NODE_B" --answer "ANSWER" --type path_query --nodes NODE_A NODE_B
 ```
 
 ---
@@ -205,8 +205,8 @@ python -m graphify save-result --question "Path from NODE_A to NODE_B" --answer 
 Give a plain-language explanation of a single node - everything connected to it.
 
 First check the graph exists:
-```powershell
-python -c "
+```bash
+${GRAPHIFY_PYTHON:-python} -c "
 from pathlib import Path
 if not Path('graphify-out/graph.json').exists():
     print('ERROR: No graph found. Run /graphify <path> first to build the graph.')
@@ -215,8 +215,8 @@ if not Path('graphify-out/graph.json').exists():
 ```
 If it fails, stop and tell the user to run `/graphify <path>` first.
 
-```powershell
-python -c "
+```bash
+${GRAPHIFY_PYTHON:-python} -c "
 import json, sys
 import networkx as nx
 from networkx.readwrite import json_graph
@@ -260,8 +260,8 @@ Replace `NODE_NAME` with the concept the user asked about. Then write a 3-5 sent
 
 After writing the explanation, save it back:
 
-```powershell
-python -m graphify save-result --question "Explain NODE_NAME" --answer "ANSWER" --type explain --nodes NODE_NAME
+```bash
+${GRAPHIFY_PYTHON:-python} -m graphify save-result --question "Explain NODE_NAME" --answer "ANSWER" --type explain --nodes NODE_NAME
 ```
 
 ---
@@ -270,8 +270,8 @@ python -m graphify save-result --question "Explain NODE_NAME" --answer "ANSWER" 
 
 Fetch a URL and add it to the corpus, then update the graph.
 
-```powershell
-python -c "
+```bash
+${GRAPHIFY_PYTHON:-python} -c "
 import sys
 from graphify.ingest import ingest
 from pathlib import Path
