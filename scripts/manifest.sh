@@ -11,6 +11,7 @@ rules|rules|dir
 claude/skills|skills|dir
 claude/agents|agents|dir
 claude/hooks|hooks|dir
+claude/bin|bin|dir
 claude/statusline.sh|statusline.sh|file'
 
 # 跨平台取檔案時間：GNU date -r <檔> 可用；macOS/BSD 的 -r 是「秒數」，退回 stat -f。
