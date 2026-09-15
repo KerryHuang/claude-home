@@ -1,8 +1,10 @@
 ---
 paths:
   - "**/*.vue"
-  - "**/*.ts"
-  - "**/*.tsx"
+  - "**/my-frontend/**/*.ts"
+
+# 不掛 **/*.ts、**/*.tsx：本檔是 Vue/Quasar 專屬指引，
+# 而多數 .tsx／不少 .ts 屬 React／Next 專案，掛上去會給出錯誤指引。
 ---
 
 # Vue 3 + TypeScript

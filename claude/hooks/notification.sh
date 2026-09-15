@@ -9,16 +9,26 @@
 
 TITLE="Claude Code 🤖"
 # 注意：訊息文案禁用單引號（'）——會提前閉合 PowerShell 字面導致腳本破壞
-MESSAGES=(
-  "做好了！來驗收一下吧 ✅"
-  "嘿～你的 code 好了喔 🛠️"
-  "報告老闆，任務完成！🫡"
-  "叮咚～有新進度等你看 📬"
-  "搞定了，換你上場 🎯"
-  "Code 寫好了，請過目 👀"
-  "完工！來 review 一下？🔍"
-  "我這邊 OK 了，輪到你了 🏓"
-)
+# $1: 空／stop＝完工通知（Stop hook）；notify＝等你回應（Notification hook）
+if [[ "$1" == "notify" ]]; then
+  MESSAGES=(
+    "等你一句話才能繼續 🙋"
+    "有東西要你確認一下 ✋"
+    "卡住了，需要你點頭 🚦"
+    "叩叩～輪到你回應了 🔔"
+  )
+else
+  MESSAGES=(
+    "做好了！來驗收一下吧 ✅"
+    "嘿～你的 code 好了喔 🛠️"
+    "報告老闆，任務完成！🫡"
+    "叮咚～有新進度等你看 📬"
+    "搞定了，換你上場 🎯"
+    "Code 寫好了，請過目 👀"
+    "完工！來 review 一下？🔍"
+    "我這邊 OK 了，輪到你了 🏓"
+  )
+fi
 MESSAGE="${MESSAGES[RANDOM % ${#MESSAGES[@]}]}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
