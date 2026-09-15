@@ -1,8 +1,9 @@
 ---
 paths:
   - "**/*.py"
-  - "**/*.pyi"
   - "**/pyproject.toml"
+
+# 不掛 **/*.pyi：命中的幾乎全是 .venv/site-packages 的 vendored 型別存根。
 ---
 
 # Python

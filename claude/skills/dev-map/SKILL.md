@@ -33,14 +33,14 @@ argument-hint: "[關鍵字，篩選相關動線]"
 ```
 寫功能或修 bug 前          → superpowers:test-driven-development（紅燈先於實作）
 要宣告「完成/修好/全綠」前 → superpowers:verification-before-completion（先跑驗證指令再說話）
-改動要實際跑起來看         → verify / run（驅動真實流程，不只跑測試）
+改動要實際跑起來看         → run（驅動真實流程，不只跑測試）
 ```
 
 **審查**
 ```
 本機工作 diff 找 bug/清理   → code-review（加 --fix 直接套用）
 只做重用/簡化不獵 bug       → simplify
-GitHub 上的 PR              → review
+GitHub 上的 PR              → code-review <PR#>（同一支指令吃 PR target，--comment 貼 inline 留言）
 派 reviewer subagent 審一段完成的工作 → superpowers:requesting-code-review
 收到審查意見後              → superpowers:receiving-code-review（查證再改，不盲從）
 ```
@@ -75,7 +75,7 @@ git 提交               → 專案若有自己的 git skill 用它；一律遵�
 | 宣告完成前驗證 | `superpowers:verification-before-completion` |
 | 審本機 diff | `code-review`（`--fix` 順手修） |
 | 只做簡化清理 | `simplify` |
-| 審 GitHub PR | `review` |
+| 審 GitHub PR | `code-review <PR#>`（`--comment` 貼 inline 留言） |
 | 開發完成收尾（merge/PR） | `superpowers:finishing-a-development-branch` |
 | 建/改 skill、rule、hook、subagent | `rcc:advising-architecture` → `rcc:writing-*` |
 | 建 Claude Code plugin | `rcc:creating-plugins` |
@@ -87,9 +87,9 @@ git 提交               → 專案若有自己的 git skill 用它；一律遵�
 
 | 情境 | 用這個（不是那個） |
 |---|---|
-| 審「本機未提交的 diff」 | `code-review`（**非** `review`＝GitHub PR 專用） |
+| 審「本機未提交的 diff」 | `code-review`（不帶參數＝本機 diff；帶 PR#／branch／path 則審該 target） |
 | 審「一段剛完成的工作」要派 reviewer | `superpowers:requesting-code-review`（產 reviewer subagent；非內建 code-review） |
-| 「宣告完成前」的自我驗證 | `superpowers:verification-before-completion`（跑指令拿證據）；要實際驅動 app 流程 → 內建 `verify` |
+| 「宣告完成前」的自我驗證 | `superpowers:verification-before-completion`（跑指令拿證據）；要實際驅動 app 流程 → 內建 `run` |
 | 寫 skill：rcc 版 vs superpowers 版 | 有 rcc 就用 `rcc:writing-skills`（含架構定位與 reviewer 配套）；無 rcc 才用 superpowers 版 |
 | 平行派工：rcc 版 vs superpowers 版 | 兩者等價，擇一即可；同專案內保持一致 |
 | 反思學習：rcc:reflecting vs 其他 reflect 類 | 專案層學習 → `rcc:reflecting`；plugin 自身改進 → 該 plugin 的 retrospective 類 skill |
