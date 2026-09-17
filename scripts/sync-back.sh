@@ -15,8 +15,17 @@ for a in "$@"; do
 done
 CHANGED=0
 
+# 不回流：claude.ai 同步下來的 skill（機器自管、內容是 uuid 目錄）、herdr 安裝與更新的 hook
+back_skip() {  # $1=目標相對路徑
+  case "$1" in
+    skills/synced/*|hooks/herdr-agent-state.sh) return 0 ;;
+  esac
+  return 1
+}
+
 back_file() {  # $1=repo 絕對路徑  $2=目標相對路徑
   local dst="$1" rel="$2" src="$TARGET/$2"
+  back_skip "$rel" && return 0
   [ -e "$src" ] || return 0          # 本機沒有就不動 repo（刪除一律人工判斷）
   if [ ! -e "$dst" ]; then
     CHANGED=$((CHANGED + 1))
