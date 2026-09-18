@@ -10,6 +10,8 @@ Kerry 的 **user-root 層 Claude Code 設定版控**——把 `~/.claude` 中「
 | [`sdlc-upstream`](https://github.com/KerryHuang/sdlc-upstream) | 團隊 plugin marketplace：SDLC 能力，給別人安裝 |
 | 各專案 `.claude/` | 專案層規則，跟著各 repo 走 |
 
+**判準**：換到任何 repo 都成立的放這裡；一提到某專案的目錄結構、連線、動線就放該專案 `.claude/`；同事也要用的進 plugin。「工具在 user，該 repo 怎麼用它在專案」——graphify skill 在這裡，某 repo 的圖譜路徑由該 repo 的 rule 說。
+
 **刻意不管**：認證、API key、MCP server 定義、模型偏好、機器特定設定。秘密永不入版控。
 
 ## 結構
