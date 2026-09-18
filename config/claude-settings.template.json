@@ -43,6 +43,18 @@
     "padding": 0
   },
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'PY=$(command -v python || command -v python3); exec \"$PY\" \"$HOME/.claude/hooks/agent-model-guard.py\"'",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "matcher": "",
