@@ -15,7 +15,8 @@ CLAUDE_HOME="$TMP/claude" bash "$REPO_DIR/scripts/install.sh" >/dev/null
 [ ! -d "$TMP/claude/agents" ] || fail "agents 來源不存在卻建了目錄"
 [ -f "$TMP/claude/statusline.sh" ]              || fail "statusline 未安裝"
 [ -f "$TMP/claude/hooks/notification.sh" ]      || fail "hooks 未安裝"
-[ -x "$TMP/claude/bin/chrome-devtools-mcp.sh" ] || fail "bin/ 未安裝或遺失執行位"
+# claude/bin 已於 2026-09-18 移除（chrome-devtools 改直接註冊 --isolated，包裝腳本退場），不該再被安裝
+[ ! -d "$TMP/claude/bin" ]                      || fail "bin/ 已退場卻被安裝"
 [ ! -e "$TMP/claude/AGENTS.md" ]                || fail "AGENTS.md 不該被安裝"
 [ ! -e "$TMP/claude/codex" ]                    || fail "codex/ 不該被安裝"
 
