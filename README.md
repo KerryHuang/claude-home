@@ -56,7 +56,7 @@ bootstrap 做兩件事：clone 本 repo 到 `~/claude-home`（已存在則 `pull
 | 目標檔不存在 | 直接安裝 |
 | 目標檔存在且與 repo 相同 | 視為已安裝，跳過 |
 | 目標檔存在但內容不同（你改過） | **預設跳過並提示**；`--force` 才覆蓋，且覆蓋前先備份到 `~/.claude/backups/claude-home-<時間戳>/` |
-| `settings.json` | 深度合併：**既有個人值一律保留**，範本只補缺（deny/ask 清單、statusLine） |
+| `settings.json` | 深度合併：**既有個人值一律保留**，範本只補缺（deny/ask 清單、statusLine、hooks 註冊：PreToolUse→agent-model-guard、Stop→notification、UserPromptSubmit→auto-session-title） |
 | `AGENTS.md`、`codex/` | 不安裝（僅版控掛載點） |
 
 ## 手動安裝（不走 bootstrap）
