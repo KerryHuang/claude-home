@@ -128,7 +128,7 @@ harness 的提醒訊息以 1024 進位顯示上限（24.4 KiB ≈ 25,000 字元�
 1. **索引行瘦身**——官方要求「one line per entry」。長成三行摘要的條目，把細節搬進
    該則自己的 topic 檔（topic 檔**不計入**這個上限），索引只留一句 hook
 2. **狀態描述移出**——「殘留＝docs 未 commit」「下一棒＝X」這類是狀態不是記憶，
-   屬 `.claude/pipeline.json`（見 `/sa-board`），索引不該重複記
+   該在 Linear 票或 docs 裡，索引不該重複記
 3. **分層**——主索引只留「必須主動注入才有用」的兩類：**進行中**（有下一棒的）與
    **工作通則與教訓**（行為約束，不主動載入就不會遵守）。其餘查詢型分類
    （Domain／DB 真相、已定案規格、工具環境、客戶環境）移到
@@ -257,7 +257,7 @@ metadata:
   無設定可調（[官方](https://code.claude.com/docs/en/memory)）。topic 檔不受此限。
 - **官方未文件化的欄位**：`originSessionId`、`node_type`、`type` 在官方文件查無規範。
   它們是觀察到的實作行為，可讀不可依賴——用它們做邏輯判斷時要有 fallback。
-- **狀態不屬於 memory**：哪一棒、等誰、殘留什麼寫 `.claude/pipeline.json`（`/sa-board`）。
+- **狀態不屬於 memory**：哪一棒、等誰、殘留什麼是 Linear 票與 docs 的事。
   memory 只留「當時的判斷與教訓」。索引裡看到狀態描述，就是該搬走的東西。
 - **不要裝 `claude-mem`**：它曾靜默寫入 `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` 到
   settings.json，把原生 auto-memory 關掉且零警告（該專案 Issue #2836），
