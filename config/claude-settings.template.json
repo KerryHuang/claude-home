@@ -16,7 +16,16 @@
       "Bash(diskpart *)",
       "Bash(format *)",
       "Bash(mkfs *)",
-      "Bash(shutdown *)"
+      "Bash(shutdown *)",
+      "mcp__specurai__execute_sql",
+      "mcp__specurai__execute_ddl",
+      "mcp__specurai__delete_connection",
+      "mcp__specurai__migration_apply",
+      "mcp__specurai__restore_run",
+      "mcp__specurai__execute_maintenance_plan",
+      "mcp__specurai__set_recovery_model",
+      "mcp__moldplan-hq__execute_sql",
+      "mcp__moldplan-hq__execute_mssql_staging_restore"
     ],
     "ask": [
       "Bash(rm -rf *)",
@@ -36,7 +45,7 @@
       "Bash(dotnet ef database drop *)",
       "Bash(dotnet ef migrations remove *)"
     ],
-    "defaultMode": "auto"
+    "defaultMode": "bypassPermissions"
   },
   "statusLine": {
     "type": "command",
