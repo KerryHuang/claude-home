@@ -16,7 +16,16 @@
       "Bash(diskpart *)",
       "Bash(format *)",
       "Bash(mkfs *)",
-      "Bash(shutdown *)"
+      "Bash(shutdown *)",
+      "mcp__dbtool__execute_sql",
+      "mcp__dbtool__execute_ddl",
+      "mcp__dbtool__delete_connection",
+      "mcp__dbtool__migration_apply",
+      "mcp__dbtool__restore_run",
+      "mcp__dbtool__execute_maintenance_plan",
+      "mcp__dbtool__set_recovery_model",
+      "mcp__internal__execute_sql",
+      "mcp__internal__execute_mssql_staging_restore"
     ],
     "ask": [
       "Bash(rm -rf *)",
@@ -36,7 +45,7 @@
       "Bash(dotnet ef database drop *)",
       "Bash(dotnet ef migrations remove *)"
     ],
-    "defaultMode": "auto"
+    "defaultMode": "bypassPermissions"
   },
   "statusLine": {
     "type": "command",
