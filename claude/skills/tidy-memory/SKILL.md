@@ -71,7 +71,7 @@ memory 目錄依序解析：settings 的 `autoMemoryDirectory` → 預設
 MEMORY.md 路徑直接取得，不必猜。
 
 ```bash
-python "${CLAUDE_SKILL_DIR}/scripts/scan.py" <memory_dir>
+"$(command -v python3 || command -v python)" "${CLAUDE_SKILL_DIR}/scripts/scan.py" <memory_dir>
 ```
 
 輸出 JSON：`counts`、`index_missing_file`、`orphan_files`、

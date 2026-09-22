@@ -1,10 +1,12 @@
 ---
 paths:
   - "**/*.vue"
-  - "**/moldplan-frontend-2/**/*.ts"
+  - "**/composables/**/*.ts"
+  - "**/stores/**/*.ts"
 
 # 不掛 **/*.ts、**/*.tsx：本檔是 Vue/Quasar 專屬指引，
 # 而多數 .tsx／不少 .ts 屬 React／Next 專案，掛上去會給出錯誤指引。
+# .ts 只掛 Vue 慣用目錄（composables／stores），不寫任何 repo 名——user 層規則不綁專案。
 ---
 
 # Vue 3 + TypeScript
