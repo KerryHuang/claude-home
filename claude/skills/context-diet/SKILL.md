@@ -5,6 +5,11 @@ description: 量測並壓縮每個 session 無條件進 context 的設定量—�
 
 # Context 減重
 
+**與內建 `/doctor` 分工**：量測、找沒在用的擴充、CLAUDE.md 可推導內容修剪、改延遲載入這四件事
+`/doctor` 已經做——**先跑 `/doctor`，再跑本 skill**，Task 1 的量測與 Task 2 的「0 次呼叫」判定可直接引用它的報告。
+本 skill 獨有的是搬遷規則（程序／對照表／事故史搬 `refs/`、紅線不得只留在 refs、同 `paths:` rule 合併、
+MEMORY.md 索引壓行、agent description 壓字）與 Task 3-4 的提案／套用紀律（grep 所有指路處、Codex 鏡射同步、plugin bump）。
+
 每個 session 開場就吃掉的 token 有五個來源：CLAUDE.md、無 `paths:` 的 rules、MEMORY.md 索引、
 所有 enabled skill 的 description、所有 agent 的 description＋tools。這些**每次都付**，
 而且大多是慢慢長出來的重複與程序敘述。本 skill 先量、再用使用證據決定砍什麼。

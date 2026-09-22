@@ -149,7 +149,10 @@ def generate(sid, transcript):
     if not body:
         err = "read_head empty"
     else:
-        env = dict(os.environ, CC_AUTO_TITLE="1")
+        # 拋棄式 claude -p 不能繼承 HERDR_*：否則 nested session 的 SessionStart 會觸發
+        # herdr-agent-state.sh，把它的 session_id 回報到同一 pane、蓋掉真正的主 session。
+        env = {k: v for k, v in os.environ.items() if not k.startswith("HERDR_")}
+        env["CC_AUTO_TITLE"] = "1"
         proc = None
         try:
             proc = subprocess.run(
