@@ -70,7 +70,7 @@ for c in python python3; do
   if "$c" -c "" >/dev/null 2>&1; then PY="$c"; break; fi
 done
 if [ -n "$PY" ]; then
-  "$PY" - "$REPO_DIR/config/claude-settings.template.json" "$TARGET/settings.json" <<'PYEOF'
+  PYTHONUTF8=1 "$PY" - "$REPO_DIR/config/claude-settings.template.json" "$TARGET/settings.json" <<'PYEOF'
 import json, os, sys
 tpl = json.load(open(sys.argv[1], encoding="utf-8"))
 path = sys.argv[2]
