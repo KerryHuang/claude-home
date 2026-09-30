@@ -57,18 +57,47 @@ while IFS='|' read -r from to kind; do
   fi
 done <<< "$CH_ENTRIES"
 
-if [ "$CHECK" -eq 1 ]; then
-  echo "---"
-  [ "$DIFFS" -eq 0 ] && echo "一致：repo 與本機無差異（settings.json 不在比對範圍）" \
-                     || echo "$DIFFS 個檔案有差異。方向看 repo 的 commit 時間與實際內容定（本機 mtime 會被 pull／install 重置，不可當依據）：repo 較舊→sync-back.sh --apply；本機較舊→install.sh --force"
-  exit 0
-fi
-
-# settings.json 深度合併（既有值優先，範本只補缺；清單去重聯集）
 PY=""
 for c in python python3; do
   if "$c" -c "" >/dev/null 2>&1; then PY="$c"; break; fi
 done
+
+if [ "$CHECK" -eq 1 ]; then
+  # settings.json 只比「範本有、本機缺」的鍵（純量值不同是本機優先，不算差異）
+  if [ -n "$PY" ]; then
+    SETTINGS_MISSING="$(PYTHONUTF8=1 "$PY" - "$REPO_DIR/config/claude-settings.template.json" "$TARGET/settings.json" <<'PYEOF'
+import json, os, sys
+tpl = json.load(open(sys.argv[1], encoding="utf-8"))
+cur = json.load(open(sys.argv[2], encoding="utf-8")) if os.path.exists(sys.argv[2]) else {}
+
+def walk(t, c, path):
+    for key, val in t.items():
+        p = f"{path}.{key}" if path else key
+        if not isinstance(c, dict) or key not in c:
+            print(f"MISSING: settings.json {p}")
+        elif isinstance(val, dict):
+            walk(val, c[key], p)
+        elif isinstance(val, list) and isinstance(c[key], list):
+            for x in val:
+                if x not in c[key]:
+                    print(f"MISSING: settings.json {p}[] {json.dumps(x, ensure_ascii=False)[:120]}")
+walk(tpl, cur, "")
+PYEOF
+)"
+    if [ -n "$SETTINGS_MISSING" ]; then
+      echo "$SETTINGS_MISSING"
+      DIFFS=$((DIFFS + $(printf '%s\n' "$SETTINGS_MISSING" | wc -l)))
+    fi
+  else
+    echo "WARN: 找不到 python，settings.json 未比對"
+  fi
+  echo "---"
+  [ "$DIFFS" -eq 0 ] && echo "一致：repo 與本機無差異（settings.json 只比範本鍵是否齊全）" \
+                     || echo "$DIFFS 項有差異。方向看 repo 的 commit 時間與實際內容定（本機 mtime 會被 pull／install 重置，不可當依據）：repo 較舊→sync-back.sh --apply；本機較舊→install.sh --force（settings.json 缺鍵一律 install 補，合併不覆蓋既有值）"
+  exit 0
+fi
+
+# settings.json 深度合併（既有值優先，範本只補缺；清單去重聯集）
 if [ -n "$PY" ]; then
   PYTHONUTF8=1 "$PY" - "$REPO_DIR/config/claude-settings.template.json" "$TARGET/settings.json" <<'PYEOF'
 import json, os, sys
