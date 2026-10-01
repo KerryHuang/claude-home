@@ -10,7 +10,7 @@ CLAUDE_HOME="$TMP/claude" bash "$REPO_DIR/scripts/install.sh" >/dev/null
 [ -f "$TMP/claude/shared/engineering.md" ]      || fail "shared/ 未安裝"
 [ -f "$TMP/claude/rules/git-safety.md" ]        || fail "rules/ 未安裝"
 [ -f "$TMP/claude/skills/graphify/SKILL.md" ]   || fail "skills 未安裝"
-# claude/agents 目前不存在（silent-failure-hunter 在 my-workspace 專案層），
+# claude/agents 目前不存在（agent 都放在各專案層），
 # 驗的是「來源缺席時安全跳過、不建空目錄也不中斷」
 [ ! -d "$TMP/claude/agents" ] || fail "agents 來源不存在卻建了目錄"
 [ -f "$TMP/claude/statusline.sh" ]              || fail "statusline 未安裝"
