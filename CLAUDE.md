@@ -11,11 +11,3 @@
 @shared/communication.md
 @shared/engineering.md
 @shared/context-management.md
-
-## 安全紅線
-
-技術／語言／文件類規則會依檔案類型自動載入。但這兩條是**活動觸發**而非檔案觸發，
-沒有東西會提醒你，動手前自己對照：
-
-- `rules/git-safety.md` — 任何 git staging／force push／reset 前
-- `rules/mssql-safety.md` — 對 SQL Server 下任何查詢／維運指令前
