@@ -38,10 +38,11 @@ def frontmatter(text: str) -> dict[str, str] | None:
 
 
 LINK_RE = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
+CODE_RE = re.compile(r"```.*?```|`[^`\n]*`", re.S)  # 程式碼區塊與 inline code 裡的連結是範例，不檢查
 
 
 def check_md_links(md: Path, layer: str) -> None:
-    for target in LINK_RE.findall(read(md)):
+    for target in LINK_RE.findall(CODE_RE.sub("", read(md))):
         if target.startswith(("http://", "https://", "#", "mailto:")):
             continue
         t = target.split("#")[0]
@@ -132,7 +133,7 @@ def scan_layer(root: Path, tag: str) -> dict:
     """掃一個 .claude 層（user 或 project）。回傳 settings dict 供 plugin 對齊檢查。"""
     if (root / "skills").exists():
         for d in (root / "skills").iterdir():
-            if d.is_dir():
+            if d.is_dir() and d.name != "synced":  # synced/ 是 claude.ai 同步區，結構由官方管
                 check_skill_dir(d, f"{tag}/skills")
     check_rules(root / "rules", f"{tag}/rules")
     check_agents(root / "agents", f"{tag}/agents")
