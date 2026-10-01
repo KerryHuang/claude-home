@@ -18,6 +18,11 @@ remove_dir_items() {  # $1=repo 來源目錄  $2=目標相對目錄
   while IFS= read -r f; do
     remove_if_same "$src/$f" "$rel/$f"
   done < <(cd "$src" && find . -type f ! -name '*.pyc' ! -path './__pycache__/*' | sed 's|^\./||')
+  # 只收 repo 對應的空目錄（深的先收）；rmdir 遇非空會失敗，不動使用者的東西
+  while IFS= read -r f; do
+    rmdir "$TARGET/$rel/$f" 2>/dev/null || true
+  done < <(cd "$src" && find . -mindepth 1 -depth -type d | sed 's|^\./||')
+  rmdir "$TARGET/$rel" 2>/dev/null || true
 }
 
 echo "移除 claude-home ← ${TARGET}（settings.json 與備份不動）"
@@ -28,5 +33,4 @@ remove_dir_items "$REPO_DIR/claude/skills"       "skills"
 remove_dir_items "$REPO_DIR/claude/agents"       "agents"
 remove_dir_items "$REPO_DIR/claude/hooks"        "hooks"
 remove_if_same  "$REPO_DIR/claude/statusline.sh" "statusline.sh"
-find "$TARGET" -type d -empty -delete 2>/dev/null || true
 echo "完成。"

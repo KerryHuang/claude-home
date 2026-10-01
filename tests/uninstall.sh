@@ -10,6 +10,7 @@ echo '{"foo":"bar"}' > "$TMP/claude/settings.json"          # 模擬既有 setti
 mkdir -p "$TMP/claude/backups"                              # 模擬空 backups 目錄
 mkdir -p "$TMP/claude/backups/claude-home-20260101-000000"
 echo "# 舊備份" > "$TMP/claude/backups/claude-home-20260101-000000/CLAUDE.md"
+mkdir -p "$TMP/claude/projects/demo/memory"                 # 模擬 harness 預建的空 memory 目錄
 CLAUDE_HOME="$TMP/claude" bash "$REPO_DIR/scripts/uninstall.sh" >/dev/null
 
 [ ! -e "$TMP/claude/CLAUDE.md" ]        || fail "未移除與 repo 一致的 CLAUDE.md"
@@ -25,5 +26,7 @@ else
 fi
 
 [ -f "$TMP/claude/backups/claude-home-20260101-000000/CLAUDE.md" ] || fail "既有備份檔不該被移除"
+[ -d "$TMP/claude/projects/demo/memory" ] || fail "repo 不管的空目錄不該被移除"
+[ ! -e "$TMP/claude/skills/tidy-memory" ] || fail "清空後的 repo 對應目錄應被移除"
 
 echo "PASS: uninstall.sh"
