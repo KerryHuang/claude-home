@@ -33,7 +33,7 @@ python3 ~/.claude/skills/context-diet/scripts/measure.py --project <專案根> -
 把「每 session 無條件 ≈ N tokens」那行當基線抄下來，最後要對照。
 
 **證據只涵蓋本機 transcript**——多台機器工作的人，另一台的使用看不到，
-「0 次」只代表下限，砍之前要問。
+「0 次」只代表下限，砍之前要問。預設只掃 `--project` 的 transcript；判 user 層 skill 或 plugin 去留時加 `--all-projects`。
 
 ## Task 2：找候選（依「省下 tokens ÷ 工」排序）
 

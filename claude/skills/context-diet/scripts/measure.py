@@ -2,12 +2,13 @@
 """量測每個 session 無條件進 context 的設定量，並統計近期實際使用證據。
 
 用法：
-  python3 measure.py [--project <dir>] [--days 28] [--json]
+  python3 measure.py [--project <dir>] [--days 28] [--all-projects] [--json]
 
 輸出兩張表：
   1. 載入量：user 層／專案層 CLAUDE.md、全域 rules、scoped rules（附 paths）、MEMORY.md、
      各 plugin／本地 skill 的 description 總量、agent description＋tools 總量
-  2. 使用證據：近 N 天 transcript 內 Skill 呼叫、subagent 派發、MCP server 呼叫次數
+  2. 使用證據：近 N 天 transcript（含 subagent）內 Skill 呼叫、subagent 派發、MCP server 呼叫次數；
+     預設只看 --project 的 transcript，判 user 層／plugin 的去留要加 --all-projects
 估 tokens：CJK 1 字≈1 token、其餘 4 字≈1 token（粗估，只用來排序，不當精確值）。
 """
 import argparse, glob, json, os, re, sys, time
@@ -127,7 +128,7 @@ def measure(project):
         ps = paths_of(f)
         add('每次載入' if not ps else 'scoped', f'.claude/rules/{os.path.basename(f)}', read(f), ' '.join(ps))
     # memory
-    slug = '-' + project.strip('/').replace('/', '-')
+    slug = re.sub(r'[^A-Za-z0-9]', '-', project)  # Claude Code 的目錄命名：非英數一律換 -（Windows 為 D--Repos-…）
     mem = f'{H}/.claude/projects/{slug}/memory/MEMORY.md'
     if os.path.isfile(mem):
         s = read(mem)
@@ -138,22 +139,26 @@ def measure(project):
     for key, d in plugin_roots(project).items():
         if key in en:
             sources[f'plugin {key}'] = d
+    sources['claude.ai synced'] = f'{H}/.claude/skills/synced/*'
     for label, root in sources.items():
-        sk = glob.glob(f'{root}/skills/*/SKILL.md')
+        sk = glob.glob(f'{root}/skills/*/SKILL.md') if label != 'claude.ai synced' else glob.glob(f'{root}/*/SKILL.md')
         ag = glob.glob(f'{root}/agents/*.md')
+        hidden = [p for p in sk if field(p, 'disable-model-invocation') == 'true']
+        sk = [p for p in sk if p not in hidden]  # description 不進 system prompt，不計
         if sk:
             s = ''.join(field(p, 'description') for p in sk)
-            add('skill desc', label, s, f'{len(sk)} skills')
+            add('skill desc', label, s, f'{len(sk)} skills' + (f'，另 {len(hidden)} 支手動限定未計' if hidden else ''))
         if ag:
             s = ''.join(field(p, 'description') + field(p, 'tools') for p in ag)
             add('agent desc+tools', label, s, f'{len(ag)} agents')
     return rows, slug
 
 
-def usage(slug, days):
+def usage(slug, days, all_projects=False):
     since = time.time() - days * 86400
     skills, agents, mcp, slash = Counter(), Counter(), Counter(), Counter()
-    files = [f for f in glob.glob(f'{H}/.claude/projects/{slug}/*.jsonl') if os.path.getmtime(f) >= since]
+    base = f'{H}/.claude/projects/' + ('*' if all_projects else glob.escape(slug))
+    files = [f for f in glob.glob(f'{base}/**/*.jsonl', recursive=True) if os.path.getmtime(f) >= since]
     for f in files:
         s = read(f)
         skills.update(re.findall(r'"name":"Skill","input":\{"skill":"([^"]+)"', s))
@@ -167,11 +172,12 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--project', default=os.getcwd())
     ap.add_argument('--days', type=int, default=28)
+    ap.add_argument('--all-projects', action='store_true', help='使用證據掃所有專案的 transcript')
     ap.add_argument('--json', action='store_true')
     a = ap.parse_args()
     project = os.path.abspath(a.project)
     rows, slug = measure(project)
-    n, skills, agents, mcp, slash = usage(slug, a.days)
+    n, skills, agents, mcp, slash = usage(slug, a.days, a.all_projects)
     if a.json:
         json.dump({'rows': rows, 'transcripts': n, 'skills': skills, 'agents': agents, 'mcp': mcp, 'slash': slash},
                   sys.stdout, ensure_ascii=False, indent=1)
@@ -187,7 +193,8 @@ def main():
         print(f'  {g:16s} ≈ {tk:,} tokens')
     always = tot['每次載入'] + tot['skill desc'] + tot['agent desc+tools']
     print(f'\n  每 session 無條件 ≈ {always:,} tokens（scoped rules 另計，碰到路徑才載）')
-    print(f'\n# 使用證據（近 {a.days} 天，{n} 份 transcript；只涵蓋本機）\n')
+    scope = '所有專案' if a.all_projects else '本專案'
+    print(f'\n# 使用證據（近 {a.days} 天，{scope} {n} 份 transcript 含 subagent；只涵蓋本機）\n')
     for title, c in [('Skill 呼叫', skills), ('subagent 派發', agents), ('MCP server', mcp), ('使用者 slash', slash)]:
         print(f'## {title}')
         for k, v in c.most_common(40):
