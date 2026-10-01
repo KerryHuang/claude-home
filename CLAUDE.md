@@ -19,8 +19,3 @@
 
 - `rules/git-safety.md` — 任何 git staging／force push／reset 前
 - `rules/mssql-safety.md` — 對 SQL Server 下任何查詢／維運指令前
-
-## skill 導覽
-
-- 開發任務不確定第一棒／下一棒、或兩個開發 skill 撞名不知選哪 → 叫 `dev-map`
-  （觸發：「dev 動線」「開發該用哪個 skill」）。SA／規格工作則看該 workspace 的導覽（如 `sa-map`）。
