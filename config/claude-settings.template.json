@@ -41,7 +41,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "~/.claude/statusline.sh",
+    "command": "bash ~/.claude/statusline.sh",
     "padding": 0
   },
   "hooks": {
@@ -53,6 +53,18 @@
             "type": "command",
             "command": "sh -c 'PY=$(command -v python3 || command -v python); exec \"$PY\" \"$HOME/.claude/hooks/agent-model-guard.py\"'",
             "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/notification.sh notify",
+            "timeout": 10
           }
         ]
       }
