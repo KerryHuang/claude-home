@@ -1,6 +1,7 @@
 ---
 name: graphify
 description: 把任何資料夾（code、docs、論文、圖片、影音）建成可導航的知識圖譜——社群偵測、誠實審計軌跡，輸出互動 HTML、GraphRAG JSON 與 GRAPH_REPORT.md。Use when 使用者輸入 /graphify、要求「建知識圖譜」「graphify 這個目錄」「更新圖譜」（--update），或要對既有圖譜查詢（query / path / explain）。
+disable-model-invocation: true
 ---
 
 # /graphify
