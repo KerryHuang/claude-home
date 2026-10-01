@@ -63,15 +63,25 @@ for c in python python3; do
 done
 
 if [ "$CHECK" -eq 1 ]; then
-  # settings.json 只比「範本有、本機缺」的鍵（純量值不同是本機優先，不算差異）
+  # settings.json：一般鍵只比「範本有、本機缺」；statusLine 與範本 hook 另比值
   if [ -n "$PY" ]; then
     SETTINGS_MISSING="$(PYTHONUTF8=1 "$PY" - "$REPO_DIR/config/claude-settings.template.json" "$TARGET/settings.json" <<'PYEOF'
-import json, os, sys
+import json, os, re, sys
+MANAGED = ("statusLine", "hooks")  # 範本管的項目：以範本為準（hook 依腳本檔名認同一筆）
+
+def key(cmd):
+    m = re.findall(r"[\w.-]+\.(?:py|sh|ps1)", cmd or "")
+    return m[-1] if m else cmd
+
+def owned(group, keys):
+    return any(key(h.get("command")) in keys for h in group.get("hooks", []))
 tpl = json.load(open(sys.argv[1], encoding="utf-8"))
 cur = json.load(open(sys.argv[2], encoding="utf-8")) if os.path.exists(sys.argv[2]) else {}
 
 def walk(t, c, path):
     for key, val in t.items():
+        if not path and key in MANAGED:
+            continue
         p = f"{path}.{key}" if path else key
         if not isinstance(c, dict) or key not in c:
             print(f"MISSING: settings.json {p}")
@@ -82,6 +92,21 @@ def walk(t, c, path):
                 if x not in c[key]:
                     print(f"MISSING: settings.json {p}[] {json.dumps(x, ensure_ascii=False)[:120]}")
 walk(tpl, cur, "")
+if "statusLine" in tpl:
+    if "statusLine" not in cur:
+        print("MISSING: settings.json statusLine")
+    elif cur["statusLine"] != tpl["statusLine"]:
+        print("DIFF:    settings.json statusLine（範本管，--force 以範本為準）")
+for event, groups in tpl.get("hooks", {}).items():
+    curg = cur.get("hooks", {}).get(event, [])
+    for tg in groups:
+        keys = {key(h["command"]) for h in tg["hooks"]}
+        mine = [g for g in curg if owned(g, keys)]
+        label = "/".join(sorted(keys))
+        if not mine:
+            print(f"MISSING: settings.json hooks.{event} {label}")
+        elif mine != [tg]:
+            print(f"DIFF:    settings.json hooks.{event} {label}（與範本不同或重複，--force 以範本為準）")
 PYEOF
 )"
     if [ -n "$SETTINGS_MISSING" ]; then
@@ -92,17 +117,26 @@ PYEOF
     echo "WARN: 找不到 python，settings.json 未比對"
   fi
   echo "---"
-  [ "$DIFFS" -eq 0 ] && echo "一致：repo 與本機無差異（settings.json 只比範本鍵是否齊全）" \
-                     || echo "$DIFFS 項有差異。方向看 repo 的 commit 時間與實際內容定（本機 mtime 會被 pull／install 重置，不可當依據）：repo 較舊→sync-back.sh --apply；本機較舊→install.sh --force（settings.json 缺鍵一律 install 補，合併不覆蓋既有值）"
+  [ "$DIFFS" -eq 0 ] && echo "一致：repo 與本機無差異（settings.json 一般鍵只比齊全，statusLine／範本 hook 比值）" \
+                     || echo "$DIFFS 項有差異。方向看 repo 的 commit 時間與實際內容定（本機 mtime 會被 pull／install 重置，不可當依據）：repo 較舊→sync-back.sh --apply；本機較舊→install.sh --force（settings.json 缺鍵一律 install 補；一般鍵不覆蓋既有值，statusLine／範本 hook 的 DIFF 要 --force 才換成範本）"
   exit 0
 fi
 
-# settings.json 深度合併（既有值優先，範本只補缺；清單去重聯集）
+# settings.json 深度合併（既有值優先，範本只補缺；清單去重聯集）；statusLine 與範本 hook 另依 --force 以範本為準
 if [ -n "$PY" ]; then
-  PYTHONUTF8=1 "$PY" - "$REPO_DIR/config/claude-settings.template.json" "$TARGET/settings.json" <<'PYEOF'
-import json, os, sys
+  PYTHONUTF8=1 "$PY" - "$REPO_DIR/config/claude-settings.template.json" "$TARGET/settings.json" "$FORCE" <<'PYEOF'
+import json, os, re, sys
+MANAGED = ("statusLine", "hooks")  # 範本管的項目：以範本為準（hook 依腳本檔名認同一筆）
+
+def key(cmd):
+    m = re.findall(r"[\w.-]+\.(?:py|sh|ps1)", cmd or "")
+    return m[-1] if m else cmd
+
+def owned(group, keys):
+    return any(key(h.get("command")) in keys for h in group.get("hooks", []))
 tpl = json.load(open(sys.argv[1], encoding="utf-8"))
 path = sys.argv[2]
+force = sys.argv[3] == "1"
 cur = json.load(open(path, encoding="utf-8")) if os.path.exists(path) else {}
 
 def merge(template, current):
@@ -116,9 +150,24 @@ def merge(template, current):
         # 純量：既有值優先，不覆蓋
     return current
 
+# 範本管的項目：缺就補；--force 時以範本為準（同腳本的舊寫法、重複項換成範本那筆）
+if "statusLine" in tpl and ("statusLine" not in cur or force):
+    cur["statusLine"] = tpl["statusLine"]
+for event, groups in tpl.get("hooks", {}).items():
+    curg = cur.setdefault("hooks", {}).setdefault(event, [])
+    for tg in groups:
+        keys = {key(h["command"]) for h in tg["hooks"]}
+        mine = [g for g in curg if owned(g, keys)]
+        if not mine:
+            curg.append(tg)
+        elif force and mine != [tg]:
+            for g in mine:  # 只拿掉同腳本的那幾筆，同組裡本機自加的 hook 保留
+                g["hooks"] = [h for h in g.get("hooks", []) if key(h.get("command")) not in keys]
+            curg[:] = [g for g in curg if g.get("hooks")] + [tg]
+
 os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
-json.dump(merge(tpl, cur), open(path, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
-print("OK:   settings.json（合併，既有值保留）")
+json.dump(merge({k: v for k, v in tpl.items() if k not in MANAGED}, cur), open(path, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+print("OK:   settings.json（合併；statusLine／範本 hook" + ("以範本為準）" if force else "只補缺，--force 才以範本為準）"))
 PYEOF
 else
   echo "WARN: 找不到 python，跳過 settings.json 合併"

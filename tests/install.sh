@@ -39,4 +39,27 @@ CLAUDE_HOME="$TMP/claude" bash "$REPO_DIR/scripts/install.sh" --force >/dev/null
 if grep -q "使用者自改" "$TMP/claude/CLAUDE.md"; then fail "--force 未覆蓋"; fi
 ls "$TMP/claude/backups"/claude-home-*/CLAUDE.md >/dev/null 2>&1 || fail "--force 未備份"
 
+# 5) 範本管的項目（statusLine、範本 hook）：--check 比值、--force 以範本為準且不重複；本機自加的保留
+mkdir -p "$TMP/claude3"
+cat > "$TMP/claude3/settings.json" <<'JSON'
+{"statusLine":{"type":"command","command":"~/.claude/statusline.sh","padding":0},
+ "hooks":{"PreToolUse":[{"matcher":"Agent","hooks":[{"type":"command","command":"sh -c 'PY=$(command -v python || command -v python3); exec \"$PY\" \"$HOME/.claude/hooks/agent-model-guard.py\"'","timeout":5}]}],
+  "Notification":[{"hooks":[{"type":"command","command":"/opt/my/cc-status"}]}],
+  "SessionStart":[{"hooks":[{"type":"command","command":"my-own-hook.ps1"}]}]}}
+JSON
+OUT="$(CLAUDE_HOME="$TMP/claude3" bash "$REPO_DIR/scripts/install.sh" --check)"
+echo "$OUT" | grep -q "statusLine"          || fail "--check 沒抓到 statusLine 值不同"
+echo "$OUT" | grep -q "agent-model-guard"   || fail "--check 沒抓到舊寫法的 guard hook"
+CLAUDE_HOME="$TMP/claude3" bash "$REPO_DIR/scripts/install.sh" >/dev/null
+[ "$(grep -o 'agent-model-guard.py' "$TMP/claude3/settings.json" | wc -l | tr -d ' ')" = 1 ] || fail "未加 --force 也不該多加一筆同腳本 hook"
+CLAUDE_HOME="$TMP/claude3" bash "$REPO_DIR/scripts/install.sh" --force >/dev/null
+grep -q '"bash ~/.claude/statusline.sh"' "$TMP/claude3/settings.json" || fail "--force 未以範本覆蓋 statusLine"
+[ "$(grep -o 'agent-model-guard.py' "$TMP/claude3/settings.json" | wc -l | tr -d ' ')" = 1 ] || fail "--force 後 guard hook 應只剩一筆"
+grep -q 'command -v python3 || command -v python' "$TMP/claude3/settings.json" || fail "--force 未換成範本寫法的 guard"
+grep -q 'cc-status'      "$TMP/claude3/settings.json" || fail "本機自加的 Notification hook 不該被移除"
+grep -q 'my-own-hook.ps1' "$TMP/claude3/settings.json" || fail "本機自加的 SessionStart 不該被移除"
+grep -q 'notification.sh notify' "$TMP/claude3/settings.json" || fail "範本的 Notification hook 未補上"
+OUT="$(CLAUDE_HOME="$TMP/claude3" bash "$REPO_DIR/scripts/install.sh" --check)"
+if echo "$OUT" | grep -qE "^(DIFF|MISSING):.*settings.json"; then fail "--force 後 --check 仍報 settings 差異：$OUT"; fi
+
 echo "PASS: install.sh"
