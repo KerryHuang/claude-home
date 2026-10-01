@@ -85,7 +85,7 @@
           {
             "type": "command",
             "command": "sh -c 'PY=$(command -v python3 || command -v python); exec \"$PY\" \"$HOME/.claude/hooks/auto-session-title.py\"'",
-            "timeout": 10,
+            "timeout": 30,
             "statusMessage": "自動命名 session…"
           }
         ]
