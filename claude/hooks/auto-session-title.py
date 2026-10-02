@@ -94,7 +94,8 @@ def _fail(sid):
 def already_named(sid):
     """這個 session 已經有名字就不碰——使用者手動 /rename 的、或 Claude Code 本體
     generateSessionName 自動取的，都算。只有名稱為空才由本 hook 接手。
-    名稱寫在 ~/.claude/sessions/<pid>.json，以 sessionId 比對。"""
+    名稱寫在 ~/.claude/sessions/<pid>.json，以 sessionId 比對。
+    nameSource="derived" 是 2.1.28x 起開 session 就給的「資料夾名-亂數」佔位名，不算命名。"""
     d = Path(os.path.expanduser("~/.claude")) / "sessions"
     try:
         files = list(d.glob("*.json"))
@@ -106,6 +107,8 @@ def already_named(sid):
         except (OSError, ValueError):
             continue
         if rec.get("sessionId") == sid:
+            if rec.get("nameSource") == "derived":
+                return False
             return bool((rec.get("name") or "").strip())
     return False
 
