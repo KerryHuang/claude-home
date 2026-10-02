@@ -22,10 +22,10 @@ living 檔：`<OUT>/adoption-backlog.md`（`<OUT>` 見 SKILL.md「輸出位置�
 
 | 建議類型 | 交棒 |
 |---|---|
-| 改 skill / rule / hook（區塊3 類） | `rcc:improving-skills` |
+| 改 skill / rule / hook（區塊3 類） | `superpowers:writing-skills` |
 | 知識庫內容 / 漂移（區塊5 類，專案有該 skill 時） | `update-knowledge-base` |
-| 新工具 / MCP / plugin 接入（區塊1/4 類） | 手動（backlog 記接入方式草案）→ 視情況 `update-config`（settings/MCP）或 `rcc:migrate-plugin` |
-| 最佳實踐流程（區塊2 類） | 視標的：skill → `rcc:improving-skills`、慣例 → `rcc:writing-rules` |
+| 新工具 / MCP / plugin 接入（區塊1/4 類） | 手動（backlog 記接入方式草案）→ 視情況 `update-config`（settings/MCP）|
+| 最佳實踐流程（區塊2 類） | 視標的：skill → `superpowers:writing-skills`、慣例 → 手動改 rule |
 
 ## 新能力評估（facet ②：不要停在「知道有這個」）
 

@@ -1,7 +1,7 @@
 ---
 name: ai-radar
 description: 每週掃描近一週最新 AI 情報並產出週報，涵蓋大廠工具規範更新、AI 工程實踐、user 層與當下專案的 agent-system 最佳化建議、plugin 排行與（專案有提供時的）知識庫時效稽核，並對帳採納待辦跨週追蹤。手動觸發。觸發詞：「AI 週報」「查本週 AI 新聞」「AI 情報雷達」「ai-radar」。
-argument-hint: "[回溯天數，預設7] [--deep <區塊編號>]"
+argument-hint: "[回溯天數，預設7] [--deep 5]"
 disable-model-invocation: true
 ---
 
@@ -14,8 +14,7 @@ agent system（及專案知識庫）的最佳化／時效機會。跑完後**對
 ## 參數
 
 - **回溯天數**：預設 `7`（近一週）。掃描時排除超出此窗的內容，或明確標記為較舊。
-- **`--deep <區塊編號>`**：對指定區塊（1–5）加強。區塊 1–4 改用 `deep-research`
-  做 fan-out + 對抗驗證 + 引用，取代該區塊的輕量掃描；**區塊 5** 則改為
+- **`--deep 5`**：區塊 5 改為
   `update-knowledge-base --audit --deep`（L2 既有聲明做全量重驗，而非輪替抽樣；
   專案沒有該 skill 時同樣跳過）。
 
@@ -36,8 +35,7 @@ repo）；專案要讓週報進版控，就由專案自己宣告 `ai-radar-outpu
 掃描型區塊（**1B 其他大廠、2 最佳實踐、4 marketplace**）是 web 搜尋＋摘要工
 作，**一律以 `subagent_type: general-purpose` 並行派發、並指定 `model: sonnet`**，
 不要用主模型（Opus）跑，可省數倍 token。**區塊 3 反查設定**與**主編排／落檔**
-留在主執行緒用主模型（需橫向對照 repo 與判斷）。`--deep` 的區塊改走
-`deep-research`，不受此限。並行掃描 agent 數維持 3–5 個（甜蜜點）。
+留在主執行緒用主模型（需橫向對照 repo 與判斷）。並行掃描 agent 數維持 3–5 個（甜蜜點）。
 
 **區塊 5** 交棒 `update-knowledge-base --audit`，其內部已自帶降本紀律（L1 機械
 掃描派 `general-purpose` + `model: sonnet`；L2/L3 判斷留主執行緒），此處不重複派工。
@@ -45,7 +43,7 @@ repo）；專案要讓週報進版控，就由專案自己宣告 `ai-radar-outpu
 ## 流程
 
 ### 區塊 1 — 大廠更新與教學
-- **Claude Code 官方**：用 `rcc:fetching-claude-docs` 抓 `code.claude.com/llms.txt`
+- **Claude Code 官方**：用 WebFetch 抓 `code.claude.com/llms.txt`
   與 skill/rule/hook/script/settings 規範頁，找出近一週的規範或用法變更；對照本
   repo 既有寫法是否落後。
 - **其他大廠**（OpenAI / Google / Anthropic / Cursor 等）：派 `general-purpose`
@@ -62,7 +60,7 @@ repo）；專案要讓週報進版控，就由專案自己宣告 `ai-radar-outpu
   - **當下專案**：`.claude/skills/`、`.claude/rules/`、`.claude/agents/`、`CLAUDE.md`、`.claude/settings.json`
   - 專案 `CLAUDE.md` 有 `ai-radar-extra-scan: <目錄>`（例如自家 plugin 的 skills 目錄）就一併掃；沒宣告就不掃 plugin。
 - 改 user 層的檔時，指向它的版控來源（若 `~/.claude` 由某個 repo 安裝而來），不要直接改 `~/.claude`。
-- 設定健檢日後交棒 user 層的 `config-doctor`；在那之前照本區塊流程做。
+- 跨層一致性與時效性健檢交給 `config-doctor`（先 `/doctor` 再 `/config-doctor`）；本區塊只做「本週新發現 → 現行設定」的對照。
 - 反查重點維度（依本週發現動態調整，至少涵蓋）：
   - **派工 model 紀律**：skill 內文動態派 subagent/Task/Agent 時有無指定
     model；web/機械/摘要類是否該降 sonnet/haiku（agents/*.md 定義檔已 pin
@@ -71,7 +69,7 @@ repo）；專案要讓週報進版控，就由專案自己宣告 `ai-radar-outpu
     才修好的檔案級/條件式匹配。
   - **frontmatter / 結構 / 過時做法**：對照官方規範與最佳實踐。
 - 輸出**建議 + 具體行動草案**（要改哪個檔、怎麼改），**不自動套用**。要實際
-  套用時交棒 `rcc:improving-skills`。
+  套用時交棒 `superpowers:writing-skills`。
 - 此反查需橫向判斷，留主執行緒主模型；大量逐檔開檔可派 `general-purpose`
   稽核 agent（`model: sonnet`）並給明確檢查清單。
 
@@ -120,7 +118,7 @@ repo）；專案要讓週報進版控，就由專案自己宣告 `ai-radar-outpu
   週報只放摘要 + 連結。
 - **採納待辦**更新到 `<OUT>/adoption-backlog.md`（append 新項 +
   浮出未結）；週報頂端放「本週新增 N 項 / open 高分 M 項」摘要。
-- 落檔後簡述重點；套用時：區塊 3 交棒 `rcc:improving-skills`、區塊 5 交棒
+- 落檔後簡述重點；套用時：區塊 3 交棒 `superpowers:writing-skills`、區塊 5 交棒
   `update-knowledge-base`（套用模式，專案有才適用）、其餘依 backlog 交棒路由。
 
 ## 來源

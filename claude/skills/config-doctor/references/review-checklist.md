@@ -1,6 +1,6 @@
-# 內容品質自審清單（無 rcc reviewer 時的降級方案）
+# 內容品質自審清單（reviewer agents 不在時的降級方案）
 
-有安裝 rcc plugin 時**優先並行派發**其 reviewer agents（claudemd-reviewer / rule-reviewer / skill-reviewer / subagent-reviewer / hook-reviewer）；本清單供 rcc 不在時主線自審，或作為派發 prompt 的維度提示。
+user 層有 reviewer agents 時**優先並行派發**（claudemd-reviewer / rule-reviewer / skill-reviewer / subagent-reviewer / hook-reviewer）；本清單供 reviewer 不在時主線自審，或作為派發 prompt 的維度提示。
 
 ## 各元件審查面向
 

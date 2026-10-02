@@ -154,12 +154,15 @@ def generate(sid, transcript):
     else:
         # 拋棄式 claude -p 不能繼承 HERDR_*：否則 nested session 的 SessionStart 會觸發
         # herdr-agent-state.sh，把它的 session_id 回報到同一 pane、蓋掉真正的主 session。
-        env = {k: v for k, v in os.environ.items() if not k.startswith("HERDR_")}
+        # TERM_SESSION_ID／ITERM_SESSION_ID 同理：nested session 的 hook（cc-status）會蓋掉主 session 的 iTerm 狀態。
+        env = {k: v for k, v in os.environ.items()
+               if not k.startswith("HERDR_") and k not in ("TERM_SESSION_ID", "ITERM_SESSION_ID")}
         env["CC_AUTO_TITLE"] = "1"
         proc = None
         try:
             proc = subprocess.run(
-                [CLAUDE_BIN, "-p", "--model", MODEL, GEN_PROMPT + body],
+                # transcript 原文是不可信輸入：--tools "" 關掉全部工具，被注入也做不了事
+                [CLAUDE_BIN, "-p", GEN_PROMPT + body, "--model", MODEL, "--tools", ""],
                 capture_output=True, text=True, encoding="utf-8",
                 errors="replace", timeout=120, env=env, cwd=str(STATE),
             )
@@ -263,5 +266,6 @@ def main():
 
 
 if __name__ == "__main__":
+    sys.stdin.reconfigure(encoding="utf-8")
     sys.stdout.reconfigure(encoding="utf-8")
     main()

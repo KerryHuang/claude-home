@@ -15,6 +15,9 @@ DEFAULT_MODEL = "sonnet"
 
 
 def main() -> int:
+    # Windows 預設編碼不是 UTF-8：中文 payload 解碼失敗會被下面吞掉、guard 靜默失效
+    sys.stdin.reconfigure(encoding="utf-8")
+    sys.stdout.reconfigure(encoding="utf-8")
     try:
         payload = json.load(sys.stdin)
     except Exception:

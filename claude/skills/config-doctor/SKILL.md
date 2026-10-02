@@ -60,9 +60,9 @@ CLAUDE.md 兩邊都碰但角度不同：`/doctor` 問「這段能不能從 codeb
 
 ## Phase 3：內容品質審查
 
-**有 rcc plugin**：一則訊息並行派發其 reviewer agents——claudemd-reviewer×每份 CLAUDE.md、rule-reviewer×每層 rules 一批、skill-reviewer×每 3–4 個 skill 一批、subagent-reviewer×agents、hook-reviewer×hooks。prompt 附上刻意設計白名單（Phase 1 已判定者），避免重複誤報。
+**reviewer agents 在**（user 層 `~/.claude/agents/*-reviewer.md`，2026-10-02 自 rcc 搬入）：一則訊息並行派發——claudemd-reviewer×每份 CLAUDE.md、rule-reviewer×每層 rules 一批、skill-reviewer×每 3–4 個 skill 一批、subagent-reviewer×agents、hook-reviewer×hooks。prompt 附上刻意設計白名單（Phase 1 已判定者），避免重複誤報。
 
-**無 rcc**：主線依 [references/review-checklist.md](references/review-checklist.md) 逐元件自審。
+**reviewer 不在**（例如新機器還沒 install）：主線依 [references/review-checklist.md](references/review-checklist.md) 逐元件自審。
 
 **驗證**：所有元件都被某個 reviewer 或自審覆蓋。
 

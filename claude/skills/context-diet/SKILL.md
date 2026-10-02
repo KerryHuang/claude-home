@@ -25,7 +25,7 @@ MEMORY.md 索引壓行、agent description 壓字）與 Task 3-4 的提案／套
 ## Task 1：量測
 
 ```bash
-python3 ~/.claude/skills/context-diet/scripts/measure.py --project <專案根> --days 28
+"$(command -v python3 || command -v python)" "${CLAUDE_SKILL_DIR}/scripts/measure.py" --project <專案根> --days 28
 ```
 
 輸出兩張表：**載入量**（每項的字元與估 tokens，scoped rules 附 `paths:`）與**使用證據**
@@ -45,7 +45,7 @@ python3 ~/.claude/skills/context-diet/scripts/measure.py --project <專案根> -
 | 全域 rule 寫了程序／對照表／事故史 | 超過「不讀就出事」的紅線 | 搬到 `.claude/refs/<同名>.md`，rule 留紅線＋一行指路；**紅線不得只留在 refs** |
 | 只在某目錄才成立的全域 rule | 內容提到特定路徑 | 加 `paths:` frontmatter 變 scoped |
 | 兩條 scoped rule 同 `paths:` 且主題相鄰 | 例：docs 慣例＋docs 圖譜 | 合併成一檔一節 |
-| MEMORY.md 每行超過 ~80 字 | 索引只決定「要不要開 topic 檔」 | 壓 hook；細節本來就在 topic 檔內 |
+| MEMORY.md 索引過長或結構有問題 | 索引只決定「要不要開 topic 檔」 | 交給 `/tidy-memory`（門檻與連結檢查以它為準），本 skill 不另訂 |
 | plugin 整組 N 天 0 呼叫（skill 與 agent 都 0） | 使用證據 | 提議在專案層 `enabledPlugins` 設 false，要用時 `/plugin` 臨時開 |
 | agent description 超過 ~120 字 | 職責清單是給 agent 本體讀的 | 壓成「做什麼、誰派發、不做什麼」 |
 | MCP server N 天 0 呼叫 | 使用證據 | 提議停用（claude.ai 連接器要到網頁端關） |
@@ -66,7 +66,6 @@ MCP deferred 工具名（只能靠停 server）。
 - 搬進 refs 的內容要**先確認 refs 沒有現成的**（常常已經有一份，rule 那份才是複本）。
 - 有 Codex 鏡射（`.agents/`、`.codex/`）的專案，改完跑該專案的同步腳本，不手改副本。
 - 改 plugin 內的 agent description 要 bump 版本＋CHANGELOG；改完驗 frontmatter 仍可解析。
-- MEMORY.md 壓完跑一次連結檢查：每個 `](x.md)` 存在、每個 topic 檔都被索引到。
 
 ## Task 5：重量並回報
 
