@@ -79,7 +79,10 @@ export function syncUser(home = homedir(), mcpNames) {
         const parts = split(body.toString('utf8'))
         body = parts.header + preface + parts.body
       }
+      
       owned.put(join(home, '.agents/skills', e.name, relative(src, p)), body)
+      owned.put(join(home, '.gemini/config/plugins/claude-home/skills', e.name, relative(src, p)), body)
+
     }
     if (/^disable-model-invocation:\s*true\s*$/m.test(read(join(src, 'SKILL.md'))) && !existsSync(join(src, 'agents/openai.yaml'))) {
       owned.put(join(home, '.agents/skills', e.name, 'agents/openai.yaml'), 'policy:\n  allow_implicit_invocation: false\n')
@@ -110,14 +113,34 @@ export function syncUser(home = homedir(), mcpNames) {
   const scoped = []
   for (const p of walk(join(home, '.claude/rules')).filter(p => p.endsWith('.md'))) {
     const text = read(p)
+
     if (/^---\r?\n/.test(text)) {
-      const { meta, body } = split(text)
+      const { meta, body: textBody } = split(text)
+      
+      let newMeta = meta
+      if (!newMeta) newMeta = 'trigger: always_on'
+      else if (!newMeta.includes('trigger:')) newMeta += '\ntrigger: always_on'
+      const agyRule = '---\n' + newMeta.trim() + '\n---\n' + textBody
+      owned.put(join(home, '.gemini/config/plugins/claude-home/rules', p.split('/').pop()), agyRule)
+
       if (/^paths:/m.test(meta)) { scoped.push(`- ${p}\n${meta}`); continue }
-      rules.push(`\n## ${p}\n\n${body}`)
-    } else rules.push(`\n## ${p}\n\n${text}`)
+      rules.push(`\n## ${p}\n\n${textBody}`)
+    } else {
+      const agyRule = '---\ntrigger: always_on\n---\n' + text
+      owned.put(join(home, '.gemini/config/plugins/claude-home/rules', p.split('/').pop()), agyRule)
+      rules.push(`\n## ${p}\n\n${text}`)
+    }
+
   }
   owned.put(join(home, '.codex/AGENTS.md'), `<!-- claude-home:generated -->\n${root}\n${rules.join('\n')}\n## 條件式規則：工作前按 paths 讀取原檔\n\n${scoped.join('\n')}\n\n## 雙工具適配\n\n涉及 user skill、reviewer 或跨工具交接時，先讀 ${runtime}。\n`)
+
+  owned.put(join(home, '.gemini/config/plugins/claude-home/plugin.json'), JSON.stringify({
+    name: "claude-home",
+    description: "Mirrored user-level skills and rules from Claude home",
+    version: "1.0.0"
+  }, null, 2))
   owned.prune()
+
   owned.save()
   return owned.changed
 }
