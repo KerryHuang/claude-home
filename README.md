@@ -49,6 +49,7 @@ bootstrap 做兩件事：clone 本 repo 到 `~/claude-home`（已存在則 `pull
 
 - Claude Code 登入／認證
 - MCP server 設定、marketplace 註冊
+- claudebigimage plugin（貼圖大圖預覽）：`claude plugin marketplace add joshhu/claudebigimage` → `claude plugin install image-view@claudebigimage`。範本裡的 `env.CLAUDE_CODE_FORCE_TERMINAL_IMAGES=1` 是給它用的，前提是 herdr ≥ 0.9.3 ＋ Ghostty 外層；終端不符的機器把這個 env 刪掉（留著只會沒圖，不會壞畫面）
 - 機器特定 skill（如釘死本機絕對路徑者）
 
 ### 安裝行為說明
